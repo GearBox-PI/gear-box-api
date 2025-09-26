@@ -26,6 +26,27 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       })
     }
 
+    // Erros de validação (Vine) - detecta pela forma do objeto
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'messages' in error &&
+      Array.isArray((error as any).messages)
+    ) {
+      const messages = (error as any).messages as Array<{
+        message: string
+        field: string
+        rule?: string
+      }>
+      return ctx.response.status(422).send({
+        errors: messages.map((m) => ({
+          message: m.message,
+          code: m.rule ?? 'E_VALIDATION_ERROR',
+          field: m.field,
+        })),
+      })
+    }
+
     return super.handle(error, ctx)
   }
 

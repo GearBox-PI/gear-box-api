@@ -1,21 +1,23 @@
+// Migration duplicada (layout incompatível com o modelo atual que usa UUID + campos nome/senha/tipo).
+// Mantida como NO-OP para preservar ordem histórica sem quebrar execuções futuras.
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
   protected tableName = 'users'
 
   async up() {
-    this.schema.createTable(this.tableName, (table) => {
-      table.increments('id').notNullable()
-      table.string('full_name').nullable()
-      table.string('email', 254).notNullable().unique()
-      table.string('password').notNullable()
-
-      table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').nullable()
-    })
+    // No-op: tabela já criada pela migration correta `1757885146344_create_users_table`.
+    const exists = await this.schema.hasTable(this.tableName)
+    if (!exists) {
+      // Em caso muito improvável de ausência, preferimos não criar um schema divergente automaticamente.
+      // Poderia-se lançar erro ou recriar, mas manteremos seguro e explícito.
+      throw new Error(
+        'Esquema ausente: espere a migration UUID original ou crie uma migration de correção manualmente.'
+      )
+    }
   }
 
   async down() {
-    this.schema.dropTable(this.tableName)
+    // Não derruba a tabela para não afetar o schema vigente.
   }
 }
