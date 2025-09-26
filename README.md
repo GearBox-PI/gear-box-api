@@ -83,3 +83,111 @@ Esse comando irá criar as tabelas necessárias no banco de dados do container.
 ---
 
 Em caso de dúvidas, consulte a documentação do AdonisJS ou entre em contato com o responsável pelo projeto.
+
+## Coleções de API (Thunder Client / Insomnia / Postman)
+
+Esta seção documenta as coleções (endpoints) que devem ser configuradas nas ferramentas de teste de API. Por enquanto há apenas a coleção de Autenticação (Login). Futuramente adicionaremos budgets, clients, cars etc.
+
+### 1. Autenticação / Login
+
+Endpoint responsável por gerar o token de acesso (Bearer) usado nas rotas protegidas.
+
+| Campo   | Valor                            |
+| ------- | -------------------------------- |
+| Método  | `POST`                           |
+| URL     | `http://localhost:3333/sessions` |
+| Headers | `Content-Type: application/json` |
+| Auth    | Nenhuma (login público)          |
+
+#### Payload de Requisição
+
+```json
+{
+  "email": "dono@gearbox.com",
+  "password": "senha123"
+}
+```
+
+Observações:
+
+- A propriedade enviada é `password` mesmo que a coluna no banco seja `senha` (mapeado via AuthFinder no modelo `User`).
+- Usuários de teste são criados pelo seeder (`node ace db:seed`).
+
+#### Resposta de Sucesso (200)
+
+```json
+{
+  "user": {
+    "id": "<uuid>",
+    "nome": "Admin da Oficina",
+    "email": "dono@gearbox.com",
+    "tipo": "dono"
+  },
+  "token": {
+    "type": "bearer",
+    "value": "<jwt|opaque_token>",
+    "abilities": ["*"],
+    "expiresAt": "2025-01-01T12:00:00.000Z"
+  }
+}
+```
+
+Use o valor de `token.value` em chamadas protegidas no header:
+
+```
+Authorization: Bearer <token.value>
+```
+
+#### Erros (400) – Credenciais Inválidas
+
+```json
+{
+  "errors": [
+    {
+      "message": "Invalid credentials",
+      "code": "E_INVALID_CREDENTIALS"
+    }
+  ]
+}
+```
+
+#### Passos Rápidos para Configurar no Thunder Client
+
+1. Criar nova Collection: `Auth`.
+2. Adicionar Request `Login`.
+3. Método `POST`, URL `http://localhost:3333/sessions`.
+4. Aba Body -> JSON -> inserir payload acima.
+5. Enviar e copiar `token.value` para variável de ambiente (ex: `{{authToken}}`).
+6. Nas próximas requisições protegidas: Header `Authorization: Bearer {{authToken}}`.
+
+#### Variáveis Sugeridas
+
+| Nome           | Valor Exemplo           |
+| -------------- | ----------------------- |
+| `baseUrl`      | `http://localhost:3333` |
+| `authEmail`    | `dono@gearbox.com`      |
+| `authPassword` | `senha123`              |
+| `authToken`    | (preenchido após login) |
+
+#### Checklist para o Login Funcionar
+
+| Verificação                          | OK  |
+| ------------------------------------ | --- |
+| Banco rodando (Docker)               |     |
+| `.env` configurado                   |     |
+| Migrações executadas                 |     |
+| Seeders executados                   |     |
+| Servidor `npm run dev` ativo         |     |
+| Request `POST /sessions` retorna 200 |     |
+| Token salvo para uso posterior       |     |
+
+---
+
+### Futuras Coleções Planejadas
+
+- Users (admin)
+- Clients
+- Cars
+- Budgets
+
+Cada nova coleção seguirá o mesmo padrão: tabela de resumo, payloads exemplo, respostas e erros.

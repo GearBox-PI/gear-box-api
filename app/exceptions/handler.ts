@@ -1,5 +1,6 @@
 import app from '@adonisjs/core/services/app'
 import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
+import { errors as authErrors } from '@adonisjs/auth'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -13,6 +14,18 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * response to the client
    */
   async handle(error: unknown, ctx: HttpContext) {
+    // Padroniza mensagem de credenciais inválidas para casar com os testes
+    if (error instanceof authErrors.E_INVALID_CREDENTIALS) {
+      return ctx.response.status(400).send({
+        errors: [
+          {
+            message: 'Invalid credentials',
+            code: 'E_INVALID_CREDENTIALS',
+          },
+        ],
+      })
+    }
+
     return super.handle(error, ctx)
   }
 
