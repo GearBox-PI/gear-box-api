@@ -15,6 +15,8 @@ import testUtils from '@adonisjs/core/services/test_utils'
  */
 export const plugins: Config['plugins'] = [assert(), apiClient(), pluginAdonisJS(app)]
 
+// (Reporter spec removido temporariamente: configuração anterior causou erro no Planner)
+
 /**
  * Configure lifecycle function to run before and after all the
  * tests.
