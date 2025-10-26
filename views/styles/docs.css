@@ -1,0 +1,267 @@
+body {
+  margin: 0;
+}
+
+.swagger-ui .topbar {
+  display: none;
+}
+
+/* Tema claro forçado para melhor leitura */
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Ubuntu,
+    Cantarell,
+    Noto Sans,
+    Helvetica,
+    Arial,
+    'Apple Color Emoji',
+    'Segoe UI Emoji';
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.swagger-ui {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Navbar (mesmo estilo do guide) */
+.backbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0b1222;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  appearance: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* Melhorar contraste de blocos de código no tema claro */
+.swagger-ui pre,
+.swagger-ui code,
+.swagger-ui .markdown code {
+  background: #f3f4f6;
+}
+
+/* Legibilidade do bloco de informações (título e versão) */
+.swagger-ui .info {
+  color: #0b1222;
+}
+
+.swagger-ui .info .title {
+  color: #0b1222;
+  font-size: 28px;
+  /* levemente maior, porém menos pesado */
+  font-weight: 700;
+  /* reduzir do 800 para 700 */
+  letter-spacing: 0.2px;
+}
+
+/* Versão: cobrir variações do componente */
+.swagger-ui .info .title small,
+.swagger-ui .info .title .version-stamp {
+  background: #e5e7eb !important;
+  /* badge mais clara */
+  color: #0b1222 !important;
+  /* números mais escuros */
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  /* reforçar legibilidade dos números */
+  line-height: 1.6;
+  opacity: 1 !important;
+  /* evitar small mais "apagado" */
+}
+
+/* URLs e metadados ao lado/abaixo do título com mais contraste */
+.swagger-ui .info .base-url,
+.swagger-ui .info .url,
+.swagger-ui .info .title ~ div,
+.swagger-ui .info .description {
+  color: #111827;
+}
+
+.swagger-ui a {
+  color: #0b5be1;
+}
+
+.swagger-ui h2,
+.swagger-ui h3 {
+  color: #0f172a;
+}
+
+/* Seleção de texto com alto contraste */
+::selection {
+  background: #bfdbfe;
+  color: #0b1222;
+}
+
+::-moz-selection {
+  background: #bfdbfe;
+  color: #0b1222;
+}
+
+/* Títulos e textos principais em tom escuro para tema claro */
+.swagger-ui h1,
+.swagger-ui h2,
+.swagger-ui h3,
+.swagger-ui h4,
+.swagger-ui h5,
+.swagger-ui,
+.swagger-ui .markdown,
+.swagger-ui .info {
+  color: #0b1222;
+}
+
+/* Tags (seções de coleção) mais legíveis */
+.swagger-ui .opblock-tag {
+  color: #0b1222 !important;
+}
+
+/* Sumários das operações (linha expandível) */
+.swagger-ui .opblock .opblock-summary {
+  color: #0b1222;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+  color: #334155;
+}
+
+.swagger-ui .opblock .opblock-summary-path {
+  color: #111827;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  color: #0b1222;
+}
+
+/* Tabelas e células */
+.swagger-ui table th,
+.swagger-ui table td {
+  color: #0b1222;
+}
+
+/* Modelos/Esquemas */
+.swagger-ui .model-title,
+.swagger-ui .model,
+.swagger-ui .prop-type,
+.swagger-ui .model .property-name {
+  color: #0b1222;
+}
+
+.swagger-ui .model-box {
+  background: #f8fafc;
+}
+
+/* Versão explícita em <pre class="version"> */
+.swagger-ui pre.version {
+  display: inline-block;
+  margin-left: 8px;
+  background: #e5e7eb;
+  color: #0b1222;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Legibilidade dos exemplos (Example Value) em tema claro */
+.swagger-ui .opblock-body pre,
+.swagger-ui pre.microlight,
+.swagger-ui .microlight {
+  background: #f8fafc !important;
+  /* fundo claro */
+  color: #0b1222 !important;
+  /* texto escuro */
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+/* Seleção dentro dos blocos de exemplo */
+.swagger-ui pre::selection,
+.swagger-ui code::selection,
+.swagger-ui .microlight::selection {
+  background: #c7d2fe;
+  color: #0b1222;
+}
+
+.swagger-ui pre::-moz-selection,
+.swagger-ui code::-moz-selection,
+.swagger-ui .microlight::-moz-selection {
+  background: #c7d2fe;
+  color: #0b1222;
+}
+
+/* Ajustar cores de chaves/strings quando o Swagger aplica tokens claros */
+.swagger-ui .microlight .s,
+/* strings */
+.swagger-ui .microlight .k,
+/* keys */
+.swagger-ui .microlight .p
+
+/* pontuação */ {
+  color: #0b1222 !important;
+}
+
+/* Strings em verde mais escuro nos exemplos */
+.swagger-ui pre.microlight .string,
+.swagger-ui pre.microlight .str,
+.swagger-ui pre.microlight .s,
+.swagger-ui .microlight .string,
+.swagger-ui .microlight .str,
+.swagger-ui .microlight .s {
+  color: #166534 !important;
+  /* green-800 */
+}
+
+/* Cores dos tokens (strings) mais escuras para melhor leitura */
+.swagger-ui pre code.hljs .hljs-string,
+.swagger-ui .hljs-string,
+.swagger-ui code .hljs-string,
+.swagger-ui .token.string,
+.swagger-ui .string,
+.swagger-ui pre.microlight .string,
+.swagger-ui pre.microlight .str,
+.swagger-ui pre.microlight .s,
+.swagger-ui .microlight .string,
+.swagger-ui .microlight .str,
+.swagger-ui .microlight .s {
+  color: #065f46 !important;
+  /* green-900 */
+}
+
+/* Garantir fundo/texto do bloco de código consistentes com tema claro */
+.swagger-ui pre code.hljs,
+.swagger-ui code.hljs {
+  background: #f8fafc !important;
+  color: #0b1222 !important;
+}

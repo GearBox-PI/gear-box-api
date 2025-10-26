@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gear Box API - Guia</title>
+    <link rel="stylesheet" href="/views/styles/guide.css" />
+  </head>
+  <body>
+    <nav class="backbar">
+      <a class="btn" href="/">← Início</a>
+      <a class="btn" href="/docs">Docs</a>
+    </nav>
+    <main>
+      <div class="card">
+        <h1>Guia de Uso da API</h1>
+        <p class="muted">
+          Resumo do README para uso da API em desenvolvimento.
+        </p>
+
+        <h2>Requisitos</h2>
+        <ul>
+          <li>Node.js 18+ (recomendado 20+)</li>
+          <li>npm</li>
+          <li>Docker Desktop (com docker compose)</li>
+        </ul>
+
+        <h2>Passo a passo</h2>
+        <pre><code>
+npm i
+cp .env.example .env
+node ace generate:key
+docker compose up -d
+node ace migration:run
+node ace db:seed
+npm run dev</code></pre>
+        <p class="muted">
+          Dica Windows (sem Git Bash/WSL): PowerShell
+          <code>Copy-Item .env.example .env</code>
+        </p>
+
+        <h2>Configuração .env (exemplo)</h2>
+        <pre><code>
+TZ=UTC
+PORT=3333
+HOST=localhost
+LOG_LEVEL=info
+APP_KEY=... # gerado por "node ace generate:key"
+NODE_ENV=development
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=gearbox
+DB_PASSWORD=gearbox
+DB_DATABASE=gearbox_dev
+# Opcional para testes (usado quando NODE_ENV=test)
+# DB_DATABASE_TEST=gearbox_test</code></pre>
+
+        <h2>Usuários seed</h2>
+        <ul>
+          <li>dono: <code>dono@gearbox.com</code> / <code>senha123</code></li>
+          <li>
+            mecânico: <code>mec1@gearbox.com</code> / <code>senha123</code>
+          </li>
+        </ul>
+
+        <h2>Autenticação</h2>
+        <h3>Login</h3>
+        <pre><code>
+POST http://localhost:3333/login
+Content-Type: application/json
+
+{
+  "email": "dono@gearbox.com",
+  "password": "senha123"
+}</code></pre>
+
+        <p>Exemplo via curl:</p>
+        <pre><code>curl -sS -X POST http://localhost:3333/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"dono@gearbox.com","password":"senha123"}'</code></pre>
+
+        <p>Resposta 200:</p>
+        <pre><code>{
+  "user": { "id": "&lt;uuid&gt;", "nome": "Admin da Oficina", "email": "dono@gearbox.com", "tipo": "dono" },
+  "token": {
+    "type": "bearer",
+    "value": "&lt;token&gt;",
+    "abilities": [
+      "clients:read", "clients:write",
+      "cars:read", "cars:write",
+      "budgets:read", "budgets:write"
+    ],
+    "expiresAt": "..."
+  }
+}</code></pre>
+
+        <p>Use nas rotas protegidas:</p>
+        <pre><code>Authorization: Bearer &lt;token&gt;</code></pre>
+
+        <h3>Logout</h3>
+        <pre><code>
+DELETE http://localhost:3333/logout
+Authorization: Bearer &lt;token&gt;</code></pre>
+
+        <h2>Documentação</h2>
+        <ul>
+          <li><a href="/docs">Swagger UI</a></li>
+          <li><a href="/docs/openapi.yaml">OpenAPI YAML</a></li>
+        </ul>
+
+        <h2>Papéis e permissões</h2>
+        <ul>
+          <li>
+            <code>dono</code>: clients:read/write, cars:read/write,
+            budgets:read/write
+          </li>
+          <li>
+            <code>mecanico</code>: clients:read, cars:read, budgets:read/write
+          </li>
+        </ul>
+
+        <h2>Comandos úteis</h2>
+        <pre><code>
+docker compose up -d
+docker compose down
+node ace migration:run
+node ace migration:rollback
+node ace db:seed
+npm run dev</code></pre>
+
+        <h2>Testes automatizados</h2>
+        <p>Rode a suíte de testes (usa NODE_ENV=test):</p>
+        <pre><code>npm test</code></pre>
+        <p class="muted">
+          Opcional: defina <code>DB_DATABASE_TEST</code> no .env para isolar o
+          banco de testes.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

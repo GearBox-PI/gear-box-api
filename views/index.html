@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gear Box API</title>
+    <link rel="stylesheet" href="/views/styles/index.css" />
+  </head>
+  <body>
+    <main class="card">
+      <h1>Gear Box API</h1>
+      <p>
+        Bem-vindo! Esta é a API da oficina. Você pode explorar os endpoints e schemas na
+        documentação interativa.
+      </p>
+      <div class="actions">
+        <a class="btn" href="/docs">Abrir documentação (Swagger UI)</a>
+        <a class="btn secondary" href="/docs/openapi.yaml">Baixar OpenAPI (YAML)</a>
+        <a class="btn secondary" href="/guide">Guia de uso</a>
+      </div>
+      <div class="grid mt-20">
+        <div>
+          <p class="small">Autenticação</p>
+          <p>
+            Use o endpoint <code>POST /login</code> para obter o token Bearer. Envie-o no header
+            <code>Authorization: Bearer &lt;token&gt;</code>.
+          </p>
+        </div>
+        <div>
+          <p class="small">Papéis e permissões</p>
+          <p>
+            Algumas rotas exigem o papel <code>dono</code>. Outras aceitam <code>dono</code> e
+            <code>mecanico</code>. Veja detalhes no Swagger.
+          </p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

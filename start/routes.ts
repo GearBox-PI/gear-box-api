@@ -11,8 +11,15 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 import app from '@adonisjs/core/services/app'
 import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 
 router.get('/', async ({ response }) => {
+  const filePath = app.makePath('views', 'index.html')
+  if (existsSync(filePath)) {
+    response.header('Content-Type', 'text/html; charset=utf-8')
+    return response.send(await readFile(filePath, 'utf-8'))
+  }
+
   response.header('Content-Type', 'text/html; charset=utf-8')
   return response.send(`<!doctype html>
 <html lang="pt-br">
@@ -127,6 +134,12 @@ router.get('/docs/openapi.yml', async ({ response }) => {
 })
 
 router.get('/docs', async ({ response }) => {
+  const filePath = app.makePath('views', 'docs.html')
+  if (existsSync(filePath)) {
+    response.header('Content-Type', 'text/html; charset=utf-8')
+    return response.send(await readFile(filePath, 'utf-8'))
+  }
+
   response.header('Content-Type', 'text/html; charset=utf-8')
   return response.send(`<!doctype html>
 <html lang="pt-br">
@@ -151,4 +164,29 @@ router.get('/docs', async ({ response }) => {
   </script>
 </body>
 </html>`)
+})
+
+// Nova rota: Guia de uso da API
+router.get('/guide', async ({ response }) => {
+  const filePath = app.makePath('views', 'guide.html')
+  if (existsSync(filePath)) {
+    response.header('Content-Type', 'text/html; charset=utf-8')
+    return response.send(await readFile(filePath, 'utf-8'))
+  }
+  return response.redirect('/')
+})
+
+// Assets estáticos da pasta views
+router.get('/views/styles/:file', async ({ params, response }) => {
+  const filePath = app.makePath('views', 'styles', params.file)
+  if (!existsSync(filePath)) return response.status(404).send('Not Found')
+  response.header('Content-Type', 'text/css; charset=utf-8')
+  return response.download(filePath)
+})
+
+router.get('/views/js/:file', async ({ params, response }) => {
+  const filePath = app.makePath('views', 'js', params.file)
+  if (!existsSync(filePath)) return response.status(404).send('Not Found')
+  response.header('Content-Type', 'application/javascript; charset=utf-8')
+  return response.download(filePath)
 })

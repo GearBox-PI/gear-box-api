@@ -62,6 +62,8 @@ DB_PORT=5432
 DB_USER=gearbox
 DB_PASSWORD=gearbox
 DB_DATABASE=gearbox_dev
+# Opcional para testes automatizados (usa quando NODE_ENV=test)
+# DB_DATABASE_TEST=gearbox_test
 ```
 
 ## Documentação da API
@@ -76,6 +78,19 @@ Notas de autorização:
 - Endpoints de usuários exigem Bearer token válido.
 - Listar, criar e remover usuários exigem papel "dono" (veja descrição e x-required-role no Swagger).
 
+### Usuários seed (para login rápido)
+
+- dono: `dono@gearbox.com` / `senha123`
+- mecanico: `mec1@gearbox.com` / `senha123`
+
+Exemplo de login (curl):
+
+```bash
+curl -sS -X POST http://localhost:3333/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"dono@gearbox.com","password":"senha123"}'
+```
+
 ## Comandos úteis
 
 - Subir/derrubar banco:
@@ -88,6 +103,18 @@ Notas de autorização:
   - `node ace db:seed`
 - Desenvolvimento:
   - `npm run dev`
+
+## Testes automatizados
+
+Ambiente de testes usa `NODE_ENV=test`. Opcionalmente, defina `DB_DATABASE_TEST` para isolar o banco.
+
+- Rodar testes:
+
+```bash
+npm test
+```
+
+O bootstrap derruba/roda migrações e executa seed automaticamente para o ambiente de teste.
 
 ## Autenticação
 
@@ -189,3 +216,9 @@ Configuração opcional (.prettierrc):
   - Confirme que `DB_HOST/PORT/USER/PASSWORD/DB` no `.env` batem com o `docker-compose.yml`.
 - Porta 3333 ocupada
   - Ajuste `PORT` no `.env` e reinicie `npm run dev`.
+
+## Notas para Windows
+
+- O Docker Desktop para Windows pode exigir configuração adicional para compartilhar volumes corretamente.
+- Certifique-se de que o WSL 2 está instalado e habilitado, pois o Docker Desktop o utiliza como backend por padrão.
+- Para desempenho ideal, ajuste as configurações de recursos do Docker Desktop (CPU, memória, disco) conforme necessário.
