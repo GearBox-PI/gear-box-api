@@ -16,7 +16,7 @@ test.group('Auth / Logout', (group) => {
     )
   })
 
-  test('deve revogar tokens do usuário autenticado', async ({ client }) => {
+  test('deve revogar tokens do usuário autenticado', async ({ client, assert }) => {
     const token = await login(client, 'dono@gearbox.com', 'senha123')
 
     const res = await client.delete('/logout').header('Authorization', `Bearer ${token}`)
