@@ -8,6 +8,7 @@ servers:
 tags:
   - name: Auth
   - name: Users
+  - name: Clients
 
 paths:
   /login:
@@ -293,6 +294,223 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /clients:
+    get:
+      tags: [Clients]
+      summary: Listar clientes
+      description: Dono e mecânico podem listar.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: perPage
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClients'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Clients]
+      summary: Criar cliente
+      description: Apenas usuários com papel "dono" podem criar clientes.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCreateInput'
+      responses:
+        '201':
+          description: Cliente criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem criar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /clients/{id}:
+    get:
+      tags: [Clients]
+      summary: Detalhar cliente
+      description: Dono e mecânico podem ver.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Clients]
+      summary: Atualizar cliente
+      description: Apenas usuários com papel "dono" podem atualizar clientes.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Clients]
+      summary: Atualizar cliente (parcial)
+      description: Apenas usuários com papel "dono" podem atualizar clientes.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Clients]
+      summary: Remover cliente
+      description: Apenas usuários com papel "dono" podem remover clientes.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Removido
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem remover
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -366,3 +584,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    Client:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        telefone: { type: string }
+        email: { type: string, format: email, nullable: true }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    ClientCreateInput:
+      type: object
+      required: [nome, telefone]
+      properties:
+        nome: { type: string }
+        telefone: { type: string }
+        email: { type: string, format: email, nullable: true }
+    ClientUpdateInput:
+      type: object
+      properties:
+        nome: { type: string }
+        telefone: { type: string }
+        email: { type: string, format: email, nullable: true }
+    PaginatedClients:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer, example: 1 }
+            perPage: { type: integer, example: 10 }
+            currentPage: { type: integer, example: 1 }
+            lastPage: { type: integer, example: 1 }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'

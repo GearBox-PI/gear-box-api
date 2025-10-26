@@ -26,6 +26,17 @@ router
   })
   .use(middleware.auth())
 
+router
+  .group(() => {
+    router.get('/clients', '#controllers/clients_controller.index')
+    router.get('/clients/:id', '#controllers/clients_controller.show')
+    router.post('/clients', '#controllers/clients_controller.store')
+    router.put('/clients/:id', '#controllers/clients_controller.update')
+    router.patch('/clients/:id', '#controllers/clients_controller.update')
+    router.delete('/clients/:id', '#controllers/clients_controller.destroy')
+  })
+  .use(middleware.auth())
+
 router.get('/docs/openapi.yaml', async ({ response }) => {
   const yamlPath = app.makePath('docs', 'openapi.yaml')
   const ymlPath = app.makePath('docs', 'openapi.yml')
