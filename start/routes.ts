@@ -37,6 +37,28 @@ router
   })
   .use(middleware.auth())
 
+router
+  .group(() => {
+    router.get('/cars', '#controllers/cars_controller.index')
+    router.get('/cars/:id', '#controllers/cars_controller.show')
+    router.post('/cars', '#controllers/cars_controller.store')
+    router.put('/cars/:id', '#controllers/cars_controller.update')
+    router.patch('/cars/:id', '#controllers/cars_controller.update')
+    router.delete('/cars/:id', '#controllers/cars_controller.destroy')
+  })
+  .use(middleware.auth())
+
+router
+  .group(() => {
+    router.get('/budgets', '#controllers/budgets_controller.index')
+    router.get('/budgets/:id', '#controllers/budgets_controller.show')
+    router.post('/budgets', '#controllers/budgets_controller.store')
+    router.put('/budgets/:id', '#controllers/budgets_controller.update')
+    router.patch('/budgets/:id', '#controllers/budgets_controller.update')
+    router.delete('/budgets/:id', '#controllers/budgets_controller.destroy')
+  })
+  .use(middleware.auth())
+
 router.get('/docs/openapi.yaml', async ({ response }) => {
   const yamlPath = app.makePath('docs', 'openapi.yaml')
   const ymlPath = app.makePath('docs', 'openapi.yml')

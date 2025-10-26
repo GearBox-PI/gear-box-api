@@ -20,10 +20,8 @@ export default class ClientsController {
     return client
   }
 
-  // Criar cliente (apenas dono)
-  async store({ auth, request, response }: HttpContext) {
-    if (auth.user?.tipo !== 'dono') return response.forbidden({ error: 'Apenas donos podem criar' })
-
+  // Criar cliente (dono e mecânico)
+  async store({ request, response }: HttpContext) {
     const payload = await createClientValidator.validate(request.all())
     const client = await Client.create(payload)
     return response.created(client)

@@ -9,6 +9,8 @@ tags:
   - name: Auth
   - name: Users
   - name: Clients
+  - name: Cars
+  - name: Budgets
 
 paths:
   /login:
@@ -324,8 +326,7 @@ paths:
     post:
       tags: [Clients]
       summary: Criar cliente
-      description: Apenas usuários com papel "dono" podem criar clientes.
-      x-required-role: dono
+      description: Dono e mecânico podem criar clientes.
       security:
         - bearerAuth: []
       requestBody:
@@ -343,12 +344,6 @@ paths:
                 $ref: '#/components/schemas/Client'
         '401':
           description: Não autenticado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Apenas donos podem criar
           content:
             application/json:
               schema:
@@ -511,6 +506,426 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /cars:
+    get:
+      tags: [Cars]
+      summary: Listar carros
+      description: Dono e mecânico podem listar.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: perPage
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCars'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Cars]
+      summary: Criar carro
+      description: Dono e mecânico podem criar carros.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarCreateInput'
+      responses:
+        '201':
+          description: Carro criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cars/{id}:
+    get:
+      tags: [Cars]
+      summary: Detalhar carro
+      description: Dono e mecânico podem ver.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Cars]
+      summary: Atualizar carro
+      description: Apenas usuários com papel "dono" podem atualizar carros.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Cars]
+      summary: Atualizar carro (parcial)
+      description: Apenas usuários com papel "dono" podem atualizar carros.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Cars]
+      summary: Remover carro
+      description: Apenas usuários com papel "dono" podem remover carros.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Removido
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem remover
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /budgets:
+    get:
+      tags: [Budgets]
+      summary: Listar orçamentos
+      description: Dono e mecânico podem listar.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: perPage
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBudgets'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Budgets]
+      summary: Criar orçamento
+      description: Dono e mecânico podem criar orçamentos.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCreateInput'
+      responses:
+        '201':
+          description: Orçamento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /budgets/{id}:
+    get:
+      tags: [Budgets]
+      summary: Detalhar orçamento
+      description: Dono e mecânico podem ver.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Budgets]
+      summary: Atualizar orçamento
+      description: Apenas usuários com papel "dono" podem atualizar orçamentos.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Budgets]
+      summary: Atualizar orçamento (parcial)
+      description: Apenas usuários com papel "dono" podem atualizar orçamentos.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem atualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Budgets]
+      summary: Remover orçamento
+      description: Apenas usuários com papel "dono" podem remover orçamentos.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Removido
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem remover
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -620,3 +1035,92 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Client'
+    Car:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        placa: { type: string }
+        marca: { type: string }
+        modelo: { type: string }
+        ano: { type: integer }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    CarCreateInput:
+      type: object
+      required: [clientId, placa, marca, modelo, ano]
+      properties:
+        clientId: { type: string, format: uuid }
+        placa: { type: string }
+        marca: { type: string }
+        modelo: { type: string }
+        ano: { type: integer, minimum: 1900 }
+    CarUpdateInput:
+      type: object
+      properties:
+        placa: { type: string }
+        marca: { type: string }
+        modelo: { type: string }
+        ano: { type: integer, minimum: 1900 }
+    PaginatedCars:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer, example: 1 }
+            perPage: { type: integer, example: 10 }
+            currentPage: { type: integer, example: 1 }
+            lastPage: { type: integer, example: 1 }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Car'
+    Budget:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        carId: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [Pendente, Aprovado, Concluído]
+        description: { type: string, nullable: true }
+        totalValue: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    BudgetCreateInput:
+      type: object
+      required: [clientId, carId]
+      properties:
+        clientId: { type: string, format: uuid }
+        carId: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [Pendente, Aprovado, Concluído]
+        description: { type: string, nullable: true }
+        totalValue: { type: number, minimum: 0 }
+    BudgetUpdateInput:
+      type: object
+      properties:
+        clientId: { type: string, format: uuid }
+        carId: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [Pendente, Aprovado, Concluído]
+        description: { type: string, nullable: true }
+        totalValue: { type: number, minimum: 0 }
+    PaginatedBudgets:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer, example: 1 }
+            perPage: { type: integer, example: 10 }
+            currentPage: { type: integer, example: 1 }
+            lastPage: { type: integer, example: 1 }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Budget'

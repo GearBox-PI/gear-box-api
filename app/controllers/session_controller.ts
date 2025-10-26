@@ -6,13 +6,10 @@ import db from '@adonisjs/lucid/services/db'
 
 export default class SessionController {
   async store({ request }: HttpContext) {
-    // Validação do payload (gera erro que será tratado pelo handler de exceções adaptado)
     const { email, password } = await createSessionValidator.validate(request.all())
 
-    // Verifica credenciais (usa passwordColumnName = 'senha' definido no AuthFinder)
     const user = await User.verifyCredentials(email, password)
 
-    // Cria token de acesso com abilities específicas do perfil
     const abilities = getAbilitiesForRole(user.tipo)
     const token = await User.accessTokens.create(user, abilities)
 
