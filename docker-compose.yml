@@ -7,4 +7,4 @@ services:
       POSTGRES_PASSWORD: gearbox
       POSTGRES_DB: gearbox_dev
     ports:
-      - "5432:5432"
+      - '5432:5432'

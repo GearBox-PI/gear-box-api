@@ -31,7 +31,8 @@ export default class ClientsController {
 
   // Atualizar cliente (apenas dono)
   async update({ auth, params, request, response }: HttpContext) {
-    if (auth.user?.tipo !== 'dono') return response.forbidden({ error: 'Apenas donos podem atualizar' })
+    if (auth.user?.tipo !== 'dono')
+      return response.forbidden({ error: 'Apenas donos podem atualizar' })
 
     const { id } = params
     const client = await Client.find(id)
@@ -45,7 +46,8 @@ export default class ClientsController {
 
   // Remover cliente (apenas dono)
   async destroy({ auth, params, response }: HttpContext) {
-    if (auth.user?.tipo !== 'dono') return response.forbidden({ error: 'Apenas donos podem remover' })
+    if (auth.user?.tipo !== 'dono')
+      return response.forbidden({ error: 'Apenas donos podem remover' })
 
     const { id } = params
     const client = await Client.find(id)
