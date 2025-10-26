@@ -16,6 +16,8 @@ import { execSync } from 'node:child_process'
  */
 export const plugins: Config['plugins'] = [assert(), apiClient(), pluginAdonisJS(app)]
 
+// (Reporter spec removido temporariamente: configuração anterior causou erro no Planner)
+
 /**
  * Configure lifecycle function to run before and after all the
  * tests.
@@ -27,16 +29,9 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
   setup: [
     async () => {
       // Garante migrações e seed no ambiente de teste
-      try {
-        execSync('node ace migration:run --force', { stdio: 'inherit' })
-      } catch (e) {
-        // ignora se já estiver atualizado
-      }
-      try {
-        execSync('node ace db:seed', { stdio: 'inherit' })
-      } catch (e) {
-        // seed pode falhar se já existir, tolerar
-      }
+      execSync('node ace migration:rollback --batch=0 --force', { stdio: 'inherit' })
+      execSync('node ace migration:run --force', { stdio: 'inherit' })
+      execSync('node ace db:seed --force', { stdio: 'inherit' })
     },
   ],
   teardown: [],

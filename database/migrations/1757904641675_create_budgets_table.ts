@@ -4,17 +4,6 @@ export default class extends BaseSchema {
   protected tableName = 'budgets'
 
   async up() {
-    // Garante que o tipo nativo exista antes de criar a tabela
-    await this.schema.raw(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'budget_status') THEN
-          CREATE TYPE budget_status AS ENUM ('Pendente', 'Aprovado', 'Concluído');
-        END IF;
-      END
-      $$;
-    `)
-
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('id').primary()
       table.uuid('client_id').notNullable()
@@ -26,7 +15,6 @@ export default class extends BaseSchema {
         .enum('status', ['Pendente', 'Aprovado', 'Concluído'], {
           useNative: true,
           enumName: 'budget_status',
-          existingType: true,
         })
         .notNullable()
         .defaultTo('Pendente')
@@ -43,6 +31,8 @@ export default class extends BaseSchema {
 
   async down() {
     this.schema.dropTable(this.tableName)
-    await this.schema.raw('DROP TYPE IF EXISTS budget_status')
+    this.defer(async (db) => {
+      await db.raw('DROP TYPE IF EXISTS budget_status')
+    })
   }
 }

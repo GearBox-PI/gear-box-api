@@ -22,8 +22,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   @beforeSave()
   static async hashPasswordOnSave(user: User) {
-    const looksHashed = typeof user.senha === 'string' && user.senha.startsWith('scrypt$')
-    if (user.$dirty.senha && !looksHashed) {
+    if (user.$dirty.senha) {
       user.senha = await hash.make(user.senha)
     }
   }

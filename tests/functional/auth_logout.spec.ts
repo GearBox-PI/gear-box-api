@@ -1,6 +1,5 @@
 import { test } from '@japa/runner'
 import User from '#models/user'
-import hash from '@adonisjs/core/services/hash'
 
 async function login(client: any, email: string, password: string) {
   const res = await client.post('/login').json({ email, password })
@@ -11,10 +10,9 @@ async function login(client: any, email: string, password: string) {
 
 test.group('Auth / Logout', (group) => {
   group.setup(async () => {
-    const hashed = await hash.make('senha123')
     await User.updateOrCreate(
       { email: 'dono@gearbox.com' },
-      { nome: 'Admin', email: 'dono@gearbox.com', senha: hashed, tipo: 'dono' }
+      { nome: 'Admin', email: 'dono@gearbox.com', senha: 'senha123', tipo: 'dono' }
     )
   })
 
