@@ -64,6 +64,18 @@ DB_PASSWORD=gearbox
 DB_DATABASE=gearbox_dev
 ```
 
+## Documentação da API
+
+- OpenAPI (YAML): <http://localhost:3333/docs/openapi.yaml>
+- Swagger UI: <http://localhost:3333/docs>
+  - Clique em “Authorize” e informe: `Bearer <seu-token>`
+  - Você pode importar o YAML no Postman/Insomnia: abra o app > Import > selecione `docs/openapi.yaml`.
+
+Notas de autorização:
+
+- Endpoints de usuários exigem Bearer token válido.
+- Listar, criar e remover usuários exigem papel "dono" (veja descrição e x-required-role no Swagger).
+
 ## Comandos úteis
 
 - Subir/derrubar banco:
@@ -77,30 +89,14 @@ DB_DATABASE=gearbox_dev
 - Desenvolvimento:
   - `npm run dev`
 
-## Solução de problemas
+## Autenticação
 
-- EnvValidationException: Missing APP_KEY
-  - Rode `node ace generate:key` para preencher a APP_KEY no `.env`.
-- Erro de conexão ao Postgres
-  - Verifique se o container está ativo: `docker compose ps`.
-  - Confirme que `DB_HOST/PORT/USER/PASSWORD/DB` no `.env` batem com o `docker-compose.yml`.
-- Porta 3333 ocupada
-  - Ajuste `PORT` no `.env` e reinicie `npm run dev`.
-
----
-
-## Coleções de API (Thunder Client / Insomnia / Postman)
-
-Por ora há a coleção de Autenticação (Login). Outras (budgets, clients, cars) serão adicionadas.
-
-### 1. Autenticação / Login
+### Login
 
 - Método: `POST`
-- URL: `http://localhost:3333/sessions`
+- URL: `http://localhost:3333/login`
 - Headers: `Content-Type: application/json`
-- Auth: Nenhuma (login público)
-
-Payload:
+- Payload:
 
 ```json
 {
@@ -109,12 +105,7 @@ Payload:
 }
 ```
 
-Observações:
-
-- O campo enviado é `password` (mesmo que a coluna seja `senha`).
-- Usuários de teste são criados pelo seeder (`node ace db:seed`).
-
-Resposta 200 (exemplo simplificado):
+Resposta 200 (exemplo):
 
 ```json
 {
@@ -133,17 +124,68 @@ Resposta 200 (exemplo simplificado):
 }
 ```
 
-Use o `token.value` nas rotas protegidas:
+Use nas rotas protegidas:
 
 ```http
-Authorization: Bearer <token.value>
+Authorization: Bearer <token>
 ```
 
-Checklist rápido:
+### Logout
 
-- Banco rodando (Docker)
-- `.env` configurado
-- `node ace migration:run`
-- `node ace db:seed`
-- `npm run dev` ativo
-- `POST /sessions` retorna 200 e token
+- Método: `DELETE`
+- URL: `http://localhost:3333/logout`
+- Headers: `Authorization: Bearer <token>`
+- Efeito: revoga todos os tokens do usuário autenticado.
+- Resposta: `204 No Content`
+
+## Prettier (formatação de código)
+
+Instalação (dev):
+
+```bash
+npm i -D prettier
+```
+
+Checar formatação:
+
+```bash
+npx prettier --check .
+```
+
+Aplicar formatação:
+
+```bash
+npx prettier --write .
+```
+
+Scripts (opcional) no package.json:
+
+```json
+{
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  }
+}
+```
+
+Configuração opcional (.prettierrc):
+
+```json
+{
+  "singleQuote": true,
+  "semi": false,
+  "trailingComma": "all",
+  "printWidth": 100
+}
+```
+
+## Solução de problemas
+
+- EnvValidationException: Missing APP_KEY
+  - Rode `node ace generate:key` para preencher a APP_KEY no `.env`.
+- Erro de conexão ao Postgres
+  - Verifique se o container está ativo: `docker compose ps`.
+  - Confirme que `DB_HOST/PORT/USER/PASSWORD/DB` no `.env` batem com o `docker-compose.yml`.
+- Porta 3333 ocupada
+  - Ajuste `PORT` no `.env` e reinicie `npm run dev`.

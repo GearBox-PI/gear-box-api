@@ -1,0 +1,368 @@
+openapi: 3.1.0
+info:
+  title: Gear Box API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3333
+
+tags:
+  - name: Auth
+  - name: Users
+
+paths:
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    $ref: '#/components/schemas/AccessToken'
+        '400':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /logout:
+    delete:
+      tags: [Auth]
+      summary: Logout
+      description: Revoga todos os tokens do usuário autenticado e retorna 204.
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sem conteúdo
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar usuários (apenas dono)
+      description: Apenas usuários com papel "dono" podem listar usuários.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: perPage
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem listar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Users]
+      summary: Criar usuário (apenas dono)
+      description: Apenas usuários com papel "dono" podem criar novos usuários.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInput'
+      responses:
+        '201':
+          description: Usuário criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem criar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Detalhar usuário
+      description: Dono pode ver qualquer; mecânico apenas o próprio.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Users]
+      summary: Atualizar usuário
+      description: Dono altera tudo; mecânico apenas nome/senha do próprio.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Users]
+      summary: Atualizar usuário (parcial)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Sem permissão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validação falhou
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Users]
+      summary: Remover usuário (apenas dono)
+      description: Apenas usuários com papel "dono" podem remover; dono não pode remover a si mesmo.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Removido
+        '400':
+          description: Não pode remover o próprio usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Apenas donos podem remover
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Bearer
+  schemas:
+    AccessToken:
+      type: object
+      properties:
+        type: { type: string, example: bearer }
+        value: { type: string }
+        abilities:
+          type: array
+          items: { type: string }
+        expiresAt:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string, nullable: true }
+              rule: { type: string, nullable: true }
+              message: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        email: { type: string, format: email }
+        tipo: { type: string, enum: [dono, mecanico] }
+        createdAt: { type: string }
+        updatedAt: { type: string, nullable: true }
+    UserCreateInput:
+      type: object
+      required: [nome, email, senha, tipo]
+      properties:
+        nome: { type: string }
+        email: { type: string, format: email }
+        senha: { type: string, format: password }
+        tipo:
+          type: string
+          enum: [dono, mecanico]
+    UserUpdateInput:
+      type: object
+      properties:
+        nome: { type: string }
+        email: { type: string, format: email }
+        senha: { type: string, format: password }
+        tipo:
+          type: string
+          enum: [dono, mecanico]
+    PaginatedUsers:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer, example: 1 }
+            perPage: { type: integer, example: 10 }
+            currentPage: { type: integer, example: 1 }
+            lastPage: { type: integer, example: 1 }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'

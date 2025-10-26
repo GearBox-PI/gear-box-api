@@ -2,6 +2,7 @@ import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createSessionValidator } from '#validators/session_validator'
 import { getAbilitiesForRole } from '#abilities/token_abilities'
+import db from '@adonisjs/lucid/services/db'
 
 export default class SessionController {
   async store({ request }: HttpContext) {
@@ -29,5 +30,18 @@ export default class SessionController {
         expiresAt: token.expiresAt,
       },
     }
+  }
+
+  /**
+   * Logout: revoga todos os tokens do usuário autenticado
+   * (simples e eficaz para APIs de primeiro partido). Retorna 204.
+   */
+  async destroy({ auth, response }: HttpContext) {
+    const user = auth.user
+    if (!user) return response.unauthorized({ error: 'Not authenticated' })
+
+    await db.from('auth_access_tokens').where('tokenable_id', user.id).delete()
+
+    return response.noContent()
   }
 }

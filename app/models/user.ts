@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, beforeCreate, column } from '@adonisjs/lucid/orm'
+import { BaseModel, beforeCreate, beforeSave, column } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import { randomUUID } from 'node:crypto'
@@ -20,8 +20,15 @@ export default class User extends compose(BaseModel, AuthFinder) {
     if (!user.id) user.id = randomUUID()
   }
 
+  @beforeSave()
+  static async hashPasswordOnSave(user: User) {
+    if (user.$dirty.senha) {
+      user.senha = await hash.make(user.senha)
+    }
+  }
+
   @column({ columnName: 'nome' })
-  declare nome: string | null
+  declare nome: string
 
   @column()
   declare email: string
