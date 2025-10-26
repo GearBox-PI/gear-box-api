@@ -1,105 +1,106 @@
 # Gear Box API
 
-> **Aviso:** Este README é temporário e serve exclusivamente para orientar o setup do ambiente de desenvolvimento. Não utilize estas instruções em ambiente de produção.
+> Aviso: Este README orienta o setup de desenvolvimento. Não utilize estas instruções em produção.
 
-Este projeto utiliza Docker apenas para o banco de dados; a aplicação deve ser executada localmente. Siga os passos abaixo para iniciar o banco com Docker e executar as migrations pela aplicação local.
+Este projeto usa Docker apenas para o banco de dados (PostgreSQL). A aplicação AdonisJS roda localmente (Node.js).
 
-## Configuração do arquivo .env
+## Requisitos
 
-Antes de iniciar o container do banco de dados, é necessário configurar as variáveis de ambiente. O projeto possui um arquivo `.env.example` que serve como modelo das variáveis necessárias.
+- Node.js 18+ (recomendado 20+)
+- npm
+- Docker Desktop (com `docker compose` habilitado)
 
-Crie o arquivo `.env` na raiz do projeto copiando o exemplo:
+## TL;DR (passo a passo)
 
-```zsh
+```bash
+# 1) Instale dependências
+npm i
+
+# 2) Crie o .env a partir do exemplo
 cp .env.example .env
-```
 
-Edite o arquivo `.env` conforme necessário, ajustando as configurações de banco de dados, porta, usuário, senha, etc.
+# 3) Ajuste o .env para usar o Postgres do docker-compose
+#    Valores recomendados (bata com o docker-compose.yml):
+#    DB_HOST=localhost
+#    DB_PORT=5432
+#    DB_USER=gearbox
+#    DB_PASSWORD=gearbox
+#    DB_DATABASE=gearbox_dev
 
-**Importante:**
-Ao utilizar o banco de dados via Docker, configure as variáveis de conexão no `.env` para apontar para o serviço do container. Exemplo:
+# 4) Gere a APP_KEY (necessário para rodar Ace e o app)
+node ace generate:key
 
-```
-DB_HOST=localhost
-DB_PORT=5432 # ou a porta definida no docker-compose.yml
-DB_USER=usuario
-DB_PASSWORD=senha
-DB_DATABASE=nome_do_banco
-```
+# 5) Suba o banco de dados
+docker compose up -d
 
-Se o banco estiver rodando em uma porta diferente, ajuste o valor de `DB_PORT` conforme definido no `docker-compose.yml`.
-
-## Pré-requisitos
-
-- Docker instalado ([Guia de instalação](https://docs.docker.com/get-docker/))
-- Docker Compose instalado ([Guia de instalação](https://docs.docker.com/compose/install/))
-
-## 1. Subindo o banco de dados com Docker Compose
-
-No diretório raiz do projeto, execute:
-
-```zsh
-docker-compose up -d
-```
-
-Esse comando irá iniciar apenas o serviço do banco de dados definido no arquivo `docker-compose.yml`.
-
-Para verificar se o container do banco está em execução:
-
-```zsh
-docker-compose ps
-```
-
-## 2. Executando as migrations
-
-Com o banco de dados ativo no Docker e o `.env` devidamente configurado, execute as migrations localmente:
-
-```zsh
+# 6) Rode as migrações
 node ace migration:run
+
+# 7) Rode os seeders (cria usuários de teste)
+node ace db:seed
+
+# 8) Rode a API em modo desenvolvimento (HMR)
+npm run dev
 ```
 
-Esse comando irá criar as tabelas necessárias no banco de dados do container.
+Observações:
 
-## 3. Dicas adicionais
+- Se você não usa Git Bash/WSL, no Windows o comando de cópia pode ser diferente. Alternativas: PowerShell `Copy-Item .env.example .env`.
+- Se mudar as portas no `docker-compose.yml`, alinhe o `DB_PORT` no `.env`.
 
-- Para parar os containers:
-  ```zsh
-  docker-compose down
-  ```
-- Para executar as migrations novamente:
-  ```zsh
-  node ace migration:run
-  ```
-- Para desfazer as migrations:
-  ```zsh
-  node ace migration:rollback
-  ```
+## Configuração do .env (exemplo mínimo funcional)
 
-## 4. Resolução de problemas comuns
+```env
+TZ=UTC
+PORT=3333
+HOST=localhost
+LOG_LEVEL=info
+APP_KEY= # será preenchida pelo "node ace generate:key"
+NODE_ENV=development
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=gearbox
+DB_PASSWORD=gearbox
+DB_DATABASE=gearbox_dev
+```
 
-- Certifique-se de que as variáveis de ambiente estão configuradas corretamente no arquivo `.env`.
-- Se o banco não conectar, verifique se o serviço do banco está ativo no Docker.
+## Comandos úteis
+
+- Subir/derrubar banco:
+  - `docker compose up -d`
+  - `docker compose down`
+- Migrações:
+  - `node ace migration:run`
+  - `node ace migration:rollback`
+- Seeders:
+  - `node ace db:seed`
+- Desenvolvimento:
+  - `npm run dev`
+
+## Solução de problemas
+
+- EnvValidationException: Missing APP_KEY
+  - Rode `node ace generate:key` para preencher a APP_KEY no `.env`.
+- Erro de conexão ao Postgres
+  - Verifique se o container está ativo: `docker compose ps`.
+  - Confirme que `DB_HOST/PORT/USER/PASSWORD/DB` no `.env` batem com o `docker-compose.yml`.
+- Porta 3333 ocupada
+  - Ajuste `PORT` no `.env` e reinicie `npm run dev`.
 
 ---
 
-Em caso de dúvidas, consulte a documentação do AdonisJS ou entre em contato com o responsável pelo projeto.
-
 ## Coleções de API (Thunder Client / Insomnia / Postman)
 
-Esta seção documenta as coleções (endpoints) que devem ser configuradas nas ferramentas de teste de API. Por enquanto há apenas a coleção de Autenticação (Login). Futuramente adicionaremos budgets, clients, cars etc.
+Por ora há a coleção de Autenticação (Login). Outras (budgets, clients, cars) serão adicionadas.
 
 ### 1. Autenticação / Login
 
-Endpoint responsável por gerar o token de acesso (Bearer) usado nas rotas protegidas.
+- Método: `POST`
+- URL: `http://localhost:3333/sessions`
+- Headers: `Content-Type: application/json`
+- Auth: Nenhuma (login público)
 
-| Campo   | Valor                            |
-| ------- | -------------------------------- |
-| Método  | `POST`                           |
-| URL     | `http://localhost:3333/sessions` |
-| Headers | `Content-Type: application/json` |
-| Auth    | Nenhuma (login público)          |
-
-#### Payload de Requisição
+Payload:
 
 ```json
 {
@@ -110,10 +111,10 @@ Endpoint responsável por gerar o token de acesso (Bearer) usado nas rotas prote
 
 Observações:
 
-- A propriedade enviada é `password` mesmo que a coluna no banco seja `senha` (mapeado via AuthFinder no modelo `User`).
+- O campo enviado é `password` (mesmo que a coluna seja `senha`).
 - Usuários de teste são criados pelo seeder (`node ace db:seed`).
 
-#### Resposta de Sucesso (200)
+Resposta 200 (exemplo simplificado):
 
 ```json
 {
@@ -125,69 +126,24 @@ Observações:
   },
   "token": {
     "type": "bearer",
-    "value": "<jwt|opaque_token>",
+    "value": "<token>",
     "abilities": ["*"],
     "expiresAt": "2025-01-01T12:00:00.000Z"
   }
 }
 ```
 
-Use o valor de `token.value` em chamadas protegidas no header:
+Use o `token.value` nas rotas protegidas:
 
-```
+```http
 Authorization: Bearer <token.value>
 ```
 
-#### Erros (400) – Credenciais Inválidas
+Checklist rápido:
 
-```json
-{
-  "errors": [
-    {
-      "message": "Invalid credentials",
-      "code": "E_INVALID_CREDENTIALS"
-    }
-  ]
-}
-```
-
-#### Passos Rápidos para Configurar no Thunder Client
-
-1. Criar nova Collection: `Auth`.
-2. Adicionar Request `Login`.
-3. Método `POST`, URL `http://localhost:3333/sessions`.
-4. Aba Body -> JSON -> inserir payload acima.
-5. Enviar e copiar `token.value` para variável de ambiente (ex: `{{authToken}}`).
-6. Nas próximas requisições protegidas: Header `Authorization: Bearer {{authToken}}`.
-
-#### Variáveis Sugeridas
-
-| Nome           | Valor Exemplo           |
-| -------------- | ----------------------- |
-| `baseUrl`      | `http://localhost:3333` |
-| `authEmail`    | `dono@gearbox.com`      |
-| `authPassword` | `senha123`              |
-| `authToken`    | (preenchido após login) |
-
-#### Checklist para o Login Funcionar
-
-| Verificação                          | OK  |
-| ------------------------------------ | --- |
-| Banco rodando (Docker)               |     |
-| `.env` configurado                   |     |
-| Migrações executadas                 |     |
-| Seeders executados                   |     |
-| Servidor `npm run dev` ativo         |     |
-| Request `POST /sessions` retorna 200 |     |
-| Token salvo para uso posterior       |     |
-
----
-
-### Futuras Coleções Planejadas
-
-- Users (admin)
-- Clients
-- Cars
-- Budgets
-
-Cada nova coleção seguirá o mesmo padrão: tabela de resumo, payloads exemplo, respostas e erros.
+- Banco rodando (Docker)
+- `.env` configurado
+- `node ace migration:run`
+- `node ace db:seed`
+- `npm run dev` ativo
+- `POST /sessions` retorna 200 e token
