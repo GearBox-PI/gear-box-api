@@ -12,6 +12,54 @@ import { middleware } from '#start/kernel'
 import app from '@adonisjs/core/services/app'
 import { existsSync } from 'node:fs'
 
+router.get('/', async ({ response }) => {
+  response.header('Content-Type', 'text/html; charset=utf-8')
+  return response.send(`<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gear Box API</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+      display: grid; min-height: 100dvh; place-items: center; background: #0f172a; color: #e2e8f0; }
+    .card { max-width: 780px; padding: 32px; border-radius: 16px; background: #0b1222; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    h1 { margin: 0 0 12px; font-size: 28px; letter-spacing: .3px; }
+    p { margin: 8px 0 20px; color: #cbd5e1; line-height: 1.6; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    a.btn { appearance: none; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      background: #3b82f6; color: white; padding: 10px 14px; border-radius: 10px; font-weight: 600; }
+    a.btn.secondary { background: #1f2937; color: #e5e7eb; }
+    code { background: #111827; padding: 2px 6px; border-radius: 6px; color: #93c5fd; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 700px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .small { font-size: 12px; opacity: .8; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Gear Box API</h1>
+    <p>Bem-vindo! Esta é a API da oficina. Você pode explorar os endpoints e schemas na documentação interativa.</p>
+    <div class="actions">
+      <a class="btn" href="/docs">Abrir documentação (Swagger UI)</a>
+      <a class="btn secondary" href="/docs/openapi.yaml">Baixar OpenAPI (YAML)</a>
+    </div>
+    <div class="grid" style="margin-top:20px">
+      <div>
+        <p class="small">Autenticação</p>
+        <p>Use o endpoint <code>POST /login</code> para obter o token Bearer. Envie-o no header <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+      </div>
+      <div>
+        <p class="small">Papéis e permissões</p>
+        <p>Algumas rotas exigem o papel <code>dono</code>. Outras aceitam <code>dono</code> e <code>mecanico</code>. Veja detalhes no Swagger.</p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>`)
+})
+
 router.post('/login', '#controllers/session_controller.store')
 router.delete('/logout', '#controllers/session_controller.destroy').use(middleware.auth())
 
