@@ -5,7 +5,7 @@ import { getAbilitiesForRole } from '#abilities/token_abilities'
 import db from '@adonisjs/lucid/services/db'
 
 export default class SessionController {
-  async store({ request }: HttpContext) {
+  async store({ request, response }: HttpContext) {
     // Validação do payload (gera erro que será tratado pelo handler de exceções adaptado)
     const { email, password } = await createSessionValidator.validate(request.all())
 
@@ -16,6 +16,9 @@ export default class SessionController {
     const abilities = getAbilitiesForRole(user.tipo)
     const token = await User.accessTokens.create(user, abilities)
 
+    // Define o header Authorization para conveniência dos clientes
+    response.header('Authorization', `Bearer ${token.value}`)
+
     return {
       user: { id: user.id, nome: user.nome, email: user.email, tipo: user.tipo },
       token: {
@@ -23,6 +26,7 @@ export default class SessionController {
         value: token.value,
         abilities: token.abilities,
         expiresAt: token.expiresAt,
+        bearerToken: `Bearer ${token.value}`,
       },
     }
   }
