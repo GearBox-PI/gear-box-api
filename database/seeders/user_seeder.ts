@@ -3,7 +3,14 @@ import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 export default class extends BaseSeeder {
   async run() {
-    await User.updateOrCreateMany('email', [
+    type SeedUser = {
+      nome: string
+      email: string
+      senha: string
+      tipo: 'dono' | 'mecanico'
+    }
+
+    const users: SeedUser[] = [
       {
         nome: 'Admin da Oficina',
         email: 'dono@gearbox.com',
@@ -28,6 +35,17 @@ export default class extends BaseSeeder {
         senha: 'senha123',
         tipo: 'mecanico',
       },
-    ])
+    ]
+
+    for (const data of users) {
+      await User.updateOrCreate(
+        { email: data.email },
+        {
+          nome: data.nome,
+          tipo: data.tipo,
+          senha: data.senha,
+        }
+      )
+    }
   }
 }

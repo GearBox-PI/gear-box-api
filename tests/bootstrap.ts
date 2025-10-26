@@ -31,7 +31,7 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
       // Garante migrações e seed no ambiente de teste
       execSync('node ace migration:rollback --batch=0 --force', { stdio: 'inherit' })
       execSync('node ace migration:run --force', { stdio: 'inherit' })
-      execSync('node ace db:seed --force', { stdio: 'inherit' })
+      execSync('node ace db:seed', { stdio: 'inherit' })
     },
   ],
   teardown: [],

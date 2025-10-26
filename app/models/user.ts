@@ -23,7 +23,12 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @beforeSave()
   static async hashPasswordOnSave(user: User) {
     if (user.$dirty.senha) {
-      user.senha = await hash.make(user.senha)
+      // Verifica se a senha já está hasheada (começa com $ que é o formato dos hashes)
+      const isAlreadyHashed = user.senha.startsWith('$')
+      if (!isAlreadyHashed) {
+        // Sempre rehash usando algoritmo default atual
+        user.senha = await hash.make(user.senha)
+      }
     }
   }
 

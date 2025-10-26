@@ -16,6 +16,9 @@ test.group('Auth / Login', (group) => {
       password: 'senha123',
     })
 
+    // DEBUG
+    console.log('LOGIN DEBUG', response.status(), response.body())
+
     response.assertStatus(200)
     const body = response.body()
     assert.exists(body.token?.value)
