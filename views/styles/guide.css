@@ -93,3 +93,60 @@ a {
 .muted {
   color: #cbd5e1;
 }
+
+/* Postman helpers */
+.steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* Mantém sempre uma coluna para melhor leitura (um card abaixo do outro) */
+
+.step {
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.step h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #111827;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #e5e7eb;
+  font-size: 12px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.callout {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.callout.note {
+  background: #0f172a;
+}
+
+.callout.warn {
+  background: #171717;
+  border-color: rgba(244, 63, 94, 0.4);
+}

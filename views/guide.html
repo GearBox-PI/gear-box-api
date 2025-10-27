@@ -14,9 +14,7 @@
     <main>
       <div class="card">
         <h1>Guia de Uso da API</h1>
-        <p class="muted">
-          Resumo do README para uso da API em desenvolvimento.
-        </p>
+        <p class="muted">Resumo do README para uso da API em desenvolvimento.</p>
 
         <h2>Requisitos</h2>
         <ul>
@@ -58,26 +56,143 @@ DB_DATABASE=gearbox_dev
         <h2>Usuários seed</h2>
         <ul>
           <li>dono: <code>dono@gearbox.com</code> / <code>senha123</code></li>
-          <li>
-            mecânico: <code>mec1@gearbox.com</code> / <code>senha123</code>
-          </li>
+          <li>mecânico: <code>mec1@gearbox.com</code> / <code>senha123</code></li>
         </ul>
 
         <h2>Autenticação</h2>
         <h3>Login</h3>
-        <pre><code>
-POST http://localhost:3333/login
+        <div class="steps">
+          <div class="step">
+            <h3>1) Requisição</h3>
+            <pre><code>POST http://localhost:3333/login
 Content-Type: application/json
 
 {
   "email": "dono@gearbox.com",
   "password": "senha123"
 }</code></pre>
-
-        <p>Exemplo via curl:</p>
-        <pre><code>curl -sS -X POST http://localhost:3333/login \
+          </div>
+          <div class="step">
+            <h3>2) Exemplo via curl</h3>
+            <pre><code>curl -sS -X POST http://localhost:3333/login \
   -H "Content-Type: application/json" \
   -d '{"email":"dono@gearbox.com","password":"senha123"}'</code></pre>
+            <div class="callout note">
+              Ao enviar, você verá <code>token.value</code> (valor real) e o header
+              <code>Authorization</code> na resposta.
+            </div>
+          </div>
+        </div>
+
+        <h2>Postman</h2>
+        <p class="muted">
+          Configuração rápida usando variáveis de coleção e o Authorization nativo.
+        </p>
+        <div class="steps">
+          <div class="step">
+            <h3>1) Crie uma coleção</h3>
+            <ul>
+              <li>
+                No topo esquerdo, clique em <span class="pill">New</span> →
+                <span class="pill">Collection</span>.
+              </li>
+              <li>Nome: <strong>Gear Box API</strong>.</li>
+              <li>
+                Na aba <strong>Variables</strong>: adicione <code>baseUrl</code> =
+                <code>http://localhost:3333</code>.
+              </li>
+            </ul>
+          </div>
+          <div class="step">
+            <h3>2) Configure Authorization na coleção</h3>
+            <ul>
+              <li>Abra a coleção → aba <strong>Authorization</strong>.</li>
+              <li>Type: <strong>Bearer Token</strong>.</li>
+              <li>Token: <code>{{access_token}}</code> (apenas o valor do token).</li>
+              <li>Clique <span class="pill">Save</span>.</li>
+            </ul>
+            <div class="callout warn">
+              <strong>Atenção:</strong> não coloque <code>Bearer {{access_token}}</code> no campo
+              Token. O Postman já adiciona "Bearer" automaticamente.
+            </div>
+          </div>
+          <div class="step">
+            <h3>3) Login (request)</h3>
+            <ul>
+              <li>
+                Crie uma request <span class="pill">POST</span> em <code>{{baseUrl}}/login</code>.
+              </li>
+              <li>
+                Aba <strong>Body</strong> → <span class="pill">raw</span> +
+                <span class="pill">JSON</span>:
+              </li>
+            </ul>
+            <pre><code>{
+  "email": "dono@gearbox.com",
+  "password": "senha123"
+}</code></pre>
+            <ul>
+              <li>Aba <strong>Tests</strong> (cole o script abaixo para salvar o token):</li>
+            </ul>
+            <pre><code>const json = pm.response.json();
+const headerAuth = pm.response.headers.get('Authorization');
+let token = json?.token?.value;
+if (!token && headerAuth) {
+  token = headerAuth.replace(/^Bearer\s+/i, '');
+}
+if (token) {
+  pm.collectionVariables.set('access_token', token);
+  pm.test('salvou token em {{access_token}}', function () {
+    pm.expect(pm.collectionVariables.get('access_token')).to.eql(token);
+  });
+}</code></pre>
+            <div class="callout note">
+              Após o login, as outras requisições herdarão o Bearer Token definido na coleção.
+            </div>
+          </div>
+          <div class="step">
+            <h3>4) Logout (request)</h3>
+            <ul>
+              <li>
+                Crie uma request <span class="pill">DELETE</span> em
+                <code>{{baseUrl}}/logout</code>.
+              </li>
+              <li>
+                Deixe a aba <strong>Authorization</strong> como
+                <em>Inherit auth from parent</em> (vai usar o Bearer da coleção).
+              </li>
+              <li>Envie e espere <span class="pill">204 No Content</span>.</li>
+            </ul>
+          </div>
+          <div class="step">
+            <h3>5) CRUDs</h3>
+            <ul>
+              <li>
+                Use URLs como <code>{{baseUrl}}/clients</code>, <code>{{baseUrl}}/cars</code>,
+                <code>{{baseUrl}}/budgets</code>, <code>{{baseUrl}}/users</code>.
+              </li>
+              <li>Mantenha <em>Inherit auth from parent</em> em todas as requisições.</li>
+              <li>
+                Para rotas restritas (Users), faça login com o
+                <strong>dono</strong>.
+              </li>
+            </ul>
+          </div>
+          <div class="step">
+            <h3>6) Solução de problemas</h3>
+            <ul>
+              <li>
+                <strong>401 Unauthorized</strong>: rode o login de novo; confira se
+                <code>{{access_token}}</code> foi preenchido nas <em>Variables</em> da coleção.
+              </li>
+              <li>
+                Se você também usa um <em>Environment</em> ativo, remova uma variável
+                <code>access_token</code> vazia que possa sobrescrever a da coleção.
+              </li>
+              <li>Logout é <strong>DELETE</strong> (não GET/POST).</li>
+            </ul>
+          </div>
+        </div>
 
         <p>Resposta 200:</p>
         <pre><code>{
@@ -110,14 +225,20 @@ Authorization: Bearer &lt;token&gt;</code></pre>
 
         <h2>Papéis e permissões</h2>
         <ul>
-          <li>
-            <code>dono</code>: clients:read/write, cars:read/write,
-            budgets:read/write
-          </li>
-          <li>
-            <code>mecanico</code>: clients:read, cars:read, budgets:read/write
-          </li>
+          <li><code>dono</code>: clients:read/write, cars:read/write, budgets:read/write</li>
+          <li><code>mecanico</code>: clients:read, cars:read, budgets:read/write</li>
         </ul>
+
+        <h2>Formatação e qualidade de código</h2>
+        <p>Prettier (npx):</p>
+        <pre><code>npx prettier --check .   # Verifica formatação (sem alterar)
+npx prettier --write .   # Formata arquivos</code></pre>
+        <p>Ou via scripts do <code>package.json</code>:</p>
+        <pre><code>npm run format     # Prettier (equivalente a: npx prettier --write .)
+npm run lint       # ESLint (reporta problemas)
+npm run lint:fix   # ESLint (tenta corrigir automaticamente)
+npm run typecheck  # TypeScript (checagem de tipos)
+npm test           # Testes (Japa)</code></pre>
 
         <h2>Comandos úteis</h2>
         <pre><code>
@@ -132,8 +253,7 @@ npm run dev</code></pre>
         <p>Rode a suíte de testes (usa NODE_ENV=test):</p>
         <pre><code>npm test</code></pre>
         <p class="muted">
-          Opcional: defina <code>DB_DATABASE_TEST</code> no .env para isolar o
-          banco de testes.
+          Opcional: defina <code>DB_DATABASE_TEST</code> no .env para isolar o banco de testes.
         </p>
       </div>
     </main>

@@ -17,8 +17,12 @@ test.group('Auth / Login', (group) => {
     })
 
     response.assertStatus(200)
+    // Deve expor o header Authorization para conveniência
+    assert.equal(response.header('authorization')?.startsWith('Bearer '), true)
     const body = response.body()
     assert.exists(body.token?.value)
+    assert.notEqual(body.token.value, '[redacted]')
+    assert.equal(typeof body.token.value, 'string')
     assert.equal(body.user.email, 'dono@gearbox.com')
     assert.isArray(body.token.abilities)
     assert.notInclude(body.token.abilities, '*', 'Abilities não devem conter *')

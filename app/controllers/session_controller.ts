@@ -16,17 +16,24 @@ export default class SessionController {
     const abilities = getAbilitiesForRole(user.tipo)
     const token = await User.accessTokens.create(user, abilities)
 
+    // Em AdonisJS, valores sensíveis podem ser do tipo Secret e redigidos em JSON.
+    // Usamos release() quando existir para obter o valor real do token.
+    const tokenValue: string =
+      typeof (token as any).value?.release === 'function'
+        ? (token as any).value.release()
+        : (token as any).value
+
     // Define o header Authorization para conveniência dos clientes
-    response.header('Authorization', `Bearer ${token.value}`)
+    response.header('Authorization', `Bearer ${tokenValue}`)
 
     return {
       user: { id: user.id, nome: user.nome, email: user.email, tipo: user.tipo },
       token: {
         type: token.type,
-        value: token.value,
+        value: tokenValue,
         abilities: token.abilities,
         expiresAt: token.expiresAt,
-        bearerToken: `Bearer ${token.value}`,
+        bearerToken: `Bearer ${tokenValue}`,
       },
     }
   }
