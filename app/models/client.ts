@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, beforeCreate, column, hasMany } from '@adonisjs/lucid/orm'
 import { randomUUID } from 'node:crypto'
 import * as relations from '@adonisjs/lucid/types/relations'
-import Budget from './budget.js'
+import Service from './service.js'
 import Car from './car.js'
 
 export default class Client extends BaseModel {
@@ -32,6 +32,6 @@ export default class Client extends BaseModel {
   @hasMany(() => Car)
   declare cars: relations.HasMany<typeof Car>
 
-  @hasMany(() => Budget)
-  declare budgets: relations.HasMany<typeof Budget>
+  @hasMany(() => Service)
+  declare services: relations.HasMany<typeof Service>
 }

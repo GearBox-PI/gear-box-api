@@ -1,13 +1,13 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'budgets'
+  protected tableName = 'services'
 
   async up() {
-    // Garante que o tipo do enum exista (idempotente)
+    // Cria o enum usado pelo status de serviços (idempotente)
     await this.schema.raw(`
       DO $$ BEGIN
-        CREATE TYPE budget_status AS ENUM ('Pendente', 'Aprovado', 'Concluído');
+        CREATE TYPE service_status AS ENUM ('Pendente', 'Em andamento', 'Concluído', 'Cancelado');
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
@@ -21,9 +21,9 @@ export default class extends BaseSchema {
       table.timestamp('created_at', { useTz: true }).defaultTo(this.now())
 
       table
-        .enum('status', ['Pendente', 'Aprovado', 'Concluído'], {
+        .enum('status', ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'], {
           useNative: true,
-          enumName: 'budget_status',
+          enumName: 'service_status',
           existingType: true,
         })
         .notNullable()
@@ -42,7 +42,7 @@ export default class extends BaseSchema {
   async down() {
     this.schema.dropTable(this.tableName)
     this.defer(async (db) => {
-      await db.raw('DROP TYPE IF EXISTS budget_status')
+      await db.raw('DROP TYPE IF EXISTS service_status')
     })
   }
 }

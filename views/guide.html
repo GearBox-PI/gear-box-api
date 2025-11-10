@@ -169,7 +169,7 @@ if (token) {
             <ul>
               <li>
                 Use URLs como <code>{{baseUrl}}/clients</code>, <code>{{baseUrl}}/cars</code>,
-                <code>{{baseUrl}}/budgets</code>, <code>{{baseUrl}}/users</code>.
+                <code>{{baseUrl}}/services</code>, <code>{{baseUrl}}/users</code>.
               </li>
               <li>Mantenha <em>Inherit auth from parent</em> em todas as requisições.</li>
               <li>
@@ -203,7 +203,7 @@ if (token) {
     "abilities": [
       "clients:read", "clients:write",
       "cars:read", "cars:write",
-      "budgets:read", "budgets:write"
+      "services:read", "services:write"
     ],
     "expiresAt": "..."
   }
@@ -225,8 +225,8 @@ Authorization: Bearer &lt;token&gt;</code></pre>
 
         <h2>Papéis e permissões</h2>
         <ul>
-          <li><code>dono</code>: clients:read/write, cars:read/write, budgets:read/write</li>
-          <li><code>mecanico</code>: clients:read, cars:read, budgets:read/write</li>
+          <li><code>dono</code>: clients:read/write, cars:read/write, services:read/write</li>
+          <li><code>mecanico</code>: clients:read, cars:read, services:read/write</li>
         </ul>
 
         <h2>Formatação e qualidade de código</h2>

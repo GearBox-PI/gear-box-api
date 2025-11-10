@@ -105,12 +105,12 @@ router
 
 router
   .group(() => {
-    router.get('/budgets', '#controllers/budgets_controller.index')
-    router.get('/budgets/:id', '#controllers/budgets_controller.show')
-    router.post('/budgets', '#controllers/budgets_controller.store')
-    router.put('/budgets/:id', '#controllers/budgets_controller.update')
-    router.patch('/budgets/:id', '#controllers/budgets_controller.update')
-    router.delete('/budgets/:id', '#controllers/budgets_controller.destroy')
+    router.get('/services', '#controllers/services_controller.index')
+    router.get('/services/:id', '#controllers/services_controller.show')
+    router.post('/services', '#controllers/services_controller.store')
+    router.put('/services/:id', '#controllers/services_controller.update')
+    router.patch('/services/:id', '#controllers/services_controller.update')
+    router.delete('/services/:id', '#controllers/services_controller.destroy')
   })
   .use(middleware.auth())
 

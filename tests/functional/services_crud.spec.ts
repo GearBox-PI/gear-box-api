@@ -18,7 +18,7 @@ async function seedOwnerMech() {
   )
 }
 
-test.group('Budgets CRUD', (group) => {
+test.group('Services CRUD', (group) => {
   group.setup(async () => {
     await seedOwnerMech()
   })
@@ -34,7 +34,7 @@ test.group('Budgets CRUD', (group) => {
     const createClient = await client
       .post('/clients')
       .header('Authorization', `Bearer ${ownerToken}`)
-      .json({ nome: 'Cliente Budget', telefone: '11999998888' })
+      .json({ nome: 'Cliente Serviços', telefone: '11999998888' })
     createClient.assertStatus(201)
     const clientId = createClient.body().id
 
@@ -45,45 +45,45 @@ test.group('Budgets CRUD', (group) => {
     createCar.assertStatus(201)
     const carId = createCar.body().id
 
-    // mecânico pode criar orçamento
-    const createBudget = await client
-      .post('/budgets')
+    // mecânico pode criar serviço
+    const createService = await client
+      .post('/services')
       .header('Authorization', `Bearer ${mechToken}`)
-      .json({ clientId, carId, status: 'aberto', description: 'Troca de óleo', totalValue: 150.5 })
-    createBudget.assertStatus(201)
-    const budgetId = createBudget.body().id
+      .json({ clientId, carId, status: 'Em andamento', description: 'Troca de óleo', totalValue: 150.5 })
+    createService.assertStatus(201)
+    const serviceId = createService.body().id
 
     // listar e mostrar
-    const list = await client.get('/budgets').header('Authorization', `Bearer ${ownerToken}`)
+    const list = await client.get('/services').header('Authorization', `Bearer ${ownerToken}`)
     list.assertStatus(200)
     assert.isArray(list.body().data)
 
     const show = await client
-      .get(`/budgets/${budgetId}`)
+      .get(`/services/${serviceId}`)
       .header('Authorization', `Bearer ${mechToken}`)
     show.assertStatus(200)
 
     // atualizar (apenas dono)
     const updMech = await client
-      .patch(`/budgets/${budgetId}`)
+      .patch(`/services/${serviceId}`)
       .header('Authorization', `Bearer ${mechToken}`)
-      .json({ status: 'aprovado' })
+      .json({ status: 'Concluído' })
     updMech.assertStatus(403)
 
     const updOwner = await client
-      .patch(`/budgets/${budgetId}`)
+      .patch(`/services/${serviceId}`)
       .header('Authorization', `Bearer ${ownerToken}`)
-      .json({ status: 'aprovado' })
+      .json({ status: 'Concluído' })
     updOwner.assertStatus(200)
 
     // excluir (apenas dono)
     const delMech = await client
-      .delete(`/budgets/${budgetId}`)
+      .delete(`/services/${serviceId}`)
       .header('Authorization', `Bearer ${mechToken}`)
     delMech.assertStatus(403)
 
     const delOwner = await client
-      .delete(`/budgets/${budgetId}`)
+      .delete(`/services/${serviceId}`)
       .header('Authorization', `Bearer ${ownerToken}`)
     delOwner.assertStatus(204)
   })
@@ -92,18 +92,18 @@ test.group('Budgets CRUD', (group) => {
     const token = await login(client, 'dono@gearbox.com', 'senha123')
 
     const invalidIds = await client
-      .post('/budgets')
+      .post('/services')
       .header('Authorization', `Bearer ${token}`)
-      .json({ clientId: 'x', carId: 'y', status: 'aberto', totalValue: 10 })
+      .json({ clientId: 'x', carId: 'y', status: 'Pendente', totalValue: 10 })
     invalidIds.assertStatus(422)
 
     const notFoundRefs = await client
-      .post('/budgets')
+      .post('/services')
       .header('Authorization', `Bearer ${token}`)
       .json({
         clientId: '00000000-0000-0000-0000-000000000000',
         carId: '00000000-0000-0000-0000-000000000000',
-        status: 'aberto',
+        status: 'Pendente',
         totalValue: 10,
       })
     notFoundRefs.assertStatus(422)

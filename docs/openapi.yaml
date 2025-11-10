@@ -15,7 +15,7 @@ tags:
   - name: Users
   - name: Clients
   - name: Cars
-  - name: Budgets
+  - name: Services
 
 paths:
   /login:
@@ -369,22 +369,22 @@ paths:
         '204': { description: No Content }
         '404': { description: Não encontrado }
 
-  /budgets:
+  /services:
     get:
-      tags: [Budgets]
-      summary: Listar orçamentos
+      tags: [Services]
+      summary: Listar serviços
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Lista paginada de orçamentos
+          description: Lista paginada de serviços
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedBudgets'
+                $ref: '#/components/schemas/PaginatedServices'
     post:
-      tags: [Budgets]
-      summary: Criar orçamento
+      tags: [Services]
+      summary: Criar serviço
       security:
         - bearerAuth: []
       requestBody:
@@ -392,16 +392,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BudgetCreateInput'
+              $ref: '#/components/schemas/ServiceCreateInput'
       responses:
         '201':
           description: Criado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Budget'
+                $ref: '#/components/schemas/Service'
 
-  /budgets/{id}:
+  /services/{id}:
     parameters:
       - in: path
         name: id
@@ -410,8 +410,8 @@ paths:
           type: string
           format: uuid
     get:
-      tags: [Budgets]
-      summary: Detalhar orçamento
+      tags: [Services]
+      summary: Detalhar serviço
       security:
         - bearerAuth: []
       responses:
@@ -420,11 +420,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Budget'
+                $ref: '#/components/schemas/Service'
         '404': { description: Não encontrado }
     put:
-      tags: [Budgets]
-      summary: Atualizar orçamento
+      tags: [Services]
+      summary: Atualizar serviço
       security:
         - bearerAuth: []
       requestBody:
@@ -432,13 +432,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BudgetUpdateInput'
+              $ref: '#/components/schemas/ServiceUpdateInput'
       responses:
         '200': { description: OK }
         '404': { description: Não encontrado }
     patch:
-      tags: [Budgets]
-      summary: Atualizar orçamento (parcial)
+      tags: [Services]
+      summary: Atualizar serviço (parcial)
       security:
         - bearerAuth: []
       requestBody:
@@ -446,13 +446,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BudgetUpdateInput'
+              $ref: '#/components/schemas/ServiceUpdateInput'
       responses:
         '200': { description: OK }
         '404': { description: Não encontrado }
     delete:
-      tags: [Budgets]
-      summary: Remover orçamento
+      tags: [Services]
+      summary: Remover serviço
       security:
         - bearerAuth: []
       responses:
@@ -587,31 +587,31 @@ components:
         placa: { type: string }
         ano: { type: integer, minimum: 1900 }
 
-    Budget:
+    Service:
       type: object
       properties:
         id: { type: string, format: uuid }
         clientId: { type: string, format: uuid }
         carId: { type: string, format: uuid }
-        status: { type: string, enum: ['Pendente', 'Aprovado', 'Concluído'] }
+        status: { type: string, enum: ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'] }
         description: { type: string }
         totalValue: { type: string }
       required: [id, clientId, carId, status, totalValue]
 
-    BudgetCreateInput:
+    ServiceCreateInput:
       type: object
       properties:
         clientId: { type: string, format: uuid }
         carId: { type: string, format: uuid }
-        status: { type: string, enum: ['Pendente', 'Aprovado', 'Concluído'] }
+        status: { type: string, enum: ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'] }
         description: { type: string }
         totalValue: { type: number }
       required: [clientId, carId]
 
-    BudgetUpdateInput:
+    ServiceUpdateInput:
       type: object
       properties:
-        status: { type: string, enum: ['Pendente', 'Aprovado', 'Concluído'] }
+        status: { type: string, enum: ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'] }
         description: { type: string }
         totalValue: { type: number }
 
@@ -660,7 +660,7 @@ components:
           items:
             $ref: '#/components/schemas/Car'
 
-    PaginatedBudgets:
+    PaginatedServices:
       type: object
       properties:
         meta:
@@ -673,7 +673,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Budget'
+            $ref: '#/components/schemas/Service'
 
     AuthResponse:
       type: object

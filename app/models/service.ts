@@ -5,13 +5,15 @@ import Client from './client.js'
 import Car from './car.js'
 import * as relations from '@adonisjs/lucid/types/relations'
 
-export default class Budget extends BaseModel {
+export default class Service extends BaseModel {
+  public static table = 'services'
+
   @column({ isPrimary: true })
   declare id: string
 
   @beforeCreate()
-  static setId(b: Budget) {
-    if (!b.id) b.id = randomUUID()
+  static setId(service: Service) {
+    if (!service.id) service.id = randomUUID()
   }
 
   @column({ columnName: 'client_id' })
@@ -21,7 +23,7 @@ export default class Budget extends BaseModel {
   declare carId: string
 
   @column()
-  declare status: 'Pendente' | 'Aprovado' | 'Concluído'
+  declare status: 'Pendente' | 'Em andamento' | 'Concluído' | 'Cancelado'
 
   @column()
   declare description?: string | null

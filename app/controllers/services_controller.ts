@@ -1,30 +1,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Budget from '#models/budget'
+import Service from '#models/service'
 import Client from '#models/client'
 import Car from '#models/car'
-import { createBudgetValidator, updateBudgetValidator } from '#validators/budgets_validator'
+import { createServiceValidator, updateServiceValidator } from '#validators/services_validator'
 
-export default class BudgetsController {
-  // Listar budgets (dono e mecânico)
+export default class ServicesController {
+  // Listar serviços (dono e mecânico)
   async index({ request }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
 
-    const budgets = await Budget.query().orderBy('created_at', 'desc').paginate(page, perPage)
-    return budgets
+    const services = await Service.query().orderBy('created_at', 'desc').paginate(page, perPage)
+    return services
   }
 
-  // Detalhar budget
+  // Detalhar serviço
   async show({ params, response }: HttpContext) {
     const { id } = params
-    const budget = await Budget.find(id)
-    if (!budget) return response.notFound({ error: 'Orçamento não encontrado' })
-    return budget
+    const service = await Service.find(id)
+    if (!service) return response.notFound({ error: 'Serviço não encontrado' })
+    return service
   }
 
-  // Criar budget (dono e mecânico)
+  // Criar serviço (dono e mecânico)
   async store({ request, response }: HttpContext) {
-    const payload = await createBudgetValidator.validate(request.all())
+    const payload = await createServiceValidator.validate(request.all())
 
     // Valida client/car existentes
     const client = await Client.find(payload.clientId)
@@ -39,7 +39,7 @@ export default class BudgetsController {
         errors: [{ field: 'carId', message: 'Carro inexistente' }],
       })
 
-    const budget = await Budget.create({
+    const service = await Service.create({
       clientId: payload.clientId,
       carId: payload.carId,
       status: payload.status ?? 'Pendente',
@@ -47,19 +47,19 @@ export default class BudgetsController {
       totalValue: String(payload.totalValue ?? 0),
     })
 
-    return response.created(budget)
+    return response.created(service)
   }
 
-  // Atualizar budget (apenas dono)
+  // Atualizar serviço (apenas dono)
   async update({ auth, params, request, response }: HttpContext) {
     if (auth.user?.tipo !== 'dono')
       return response.forbidden({ error: 'Apenas donos podem atualizar' })
 
     const { id } = params
-    const budget = await Budget.find(id)
-    if (!budget) return response.notFound({ error: 'Orçamento não encontrado' })
+    const service = await Service.find(id)
+    if (!service) return response.notFound({ error: 'Serviço não encontrado' })
 
-    const data = await updateBudgetValidator.validate(request.all())
+    const data = await updateServiceValidator.validate(request.all())
 
     if (data.clientId) {
       const client = await Client.find(data.clientId)
@@ -82,21 +82,21 @@ export default class BudgetsController {
       ;(data as any).totalValue = String(data.totalValue)
     }
 
-    budget.merge(data as any)
-    await budget.save()
-    return budget
+    service.merge(data as any)
+    await service.save()
+    return service
   }
 
-  // Remover budget (apenas dono)
+  // Remover serviço (apenas dono)
   async destroy({ auth, params, response }: HttpContext) {
     if (auth.user?.tipo !== 'dono')
       return response.forbidden({ error: 'Apenas donos podem remover' })
 
     const { id } = params
-    const budget = await Budget.find(id)
-    if (!budget) return response.notFound({ error: 'Orçamento não encontrado' })
+    const service = await Service.find(id)
+    if (!service) return response.notFound({ error: 'Serviço não encontrado' })
 
-    await budget.delete()
+    await service.delete()
     return response.noContent()
   }
 }
