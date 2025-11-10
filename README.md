@@ -82,6 +82,8 @@ Notas de autorização:
 
 - dono: `dono@gearbox.com` / `senha123`
 - mecanico: `mec1@gearbox.com` / `senha123`
+- mecanico: `mec2@gearbox.com` / `senha123`
+- mecanico: `mec3@gearbox.com` / `senha123`
 
 Exemplo de login (curl):
 
@@ -103,6 +105,35 @@ curl -sS -X POST http://localhost:3333/login \
   - `node ace db:seed`
 - Desenvolvimento:
   - `npm run dev`
+
+## Deploy / Produção
+
+1. Ajuste o `.env` com credenciais reais (APP_KEY, DB_*, PORT/HOST). Gere a chave se ainda não existir:
+
+   ```bash
+   node ace generate:key
+   ```
+
+2. Instale dependências e gere o build:
+
+   ```bash
+   npm install --omit=dev
+   npm run build
+   ```
+
+3. Execute as migrações usando as credenciais de produção:
+
+   ```bash
+   NODE_ENV=production node ace migration:run
+   ```
+
+4. Inicie a API a partir do bundle compilado (ideal para sistemas init ou containers):
+
+   ```bash
+   node build/server.js
+   ```
+
+   > Dica: em imagens Docker de produção, use multi-stage build para copiar apenas `build/` e o `.env` configurado, garantindo pacotes enxutos.
 
 ## Testes automatizados
 
@@ -145,7 +176,14 @@ Resposta 200 (exemplo):
   "token": {
     "type": "bearer",
     "value": "<token>",
-    "abilities": ["*"],
+    "abilities": [
+      "clients:read",
+      "clients:write",
+      "cars:read",
+      "cars:write",
+      "services:read",
+      "services:write"
+    ],
     "expiresAt": "2025-01-01T12:00:00.000Z"
   }
 }

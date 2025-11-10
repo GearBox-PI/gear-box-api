@@ -33,7 +33,6 @@ export default class SessionController {
         value: tokenValue,
         abilities: token.abilities,
         expiresAt: token.expiresAt,
-        bearerToken: `Bearer ${tokenValue}`,
       },
     }
   }

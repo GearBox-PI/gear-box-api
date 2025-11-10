@@ -506,7 +506,6 @@ components:
             - type: string
               format: date-time
             - type: 'null'
-        bearerToken: { type: string, example: 'Bearer <token>' }
       required: [type, value, abilities]
 
     User:
