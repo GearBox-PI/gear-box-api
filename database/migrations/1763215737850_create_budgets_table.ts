@@ -16,7 +16,7 @@ export default class extends BaseSchema {
       table.uuid('id').primary()
       table.uuid('client_id').notNullable()
       table.uuid('car_id').notNullable()
-      table.uuid('user_id').notNullable()
+      table.uuid('user_id').nullable()
       table.text('description').notNullable()
       table.decimal('amount', 10, 2).notNullable()
       table
@@ -32,7 +32,7 @@ export default class extends BaseSchema {
 
       table.foreign('client_id').references('clients.id').onDelete('CASCADE')
       table.foreign('car_id').references('cars.id').onDelete('CASCADE')
-      table.foreign('user_id').references('users.id').onDelete('RESTRICT')
+      table.foreign('user_id').references('users.id').onDelete('SET NULL')
     })
   }
 

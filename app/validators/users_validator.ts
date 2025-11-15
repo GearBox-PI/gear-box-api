@@ -6,6 +6,7 @@ export const createUserValidator = vine.compile(
     email: vine.string().trim().email(),
     senha: vine.string().trim().minLength(6),
     tipo: vine.enum(['dono', 'mecanico'] as const),
+    ativo: vine.boolean().optional(),
   })
 )
 
@@ -15,6 +16,7 @@ export const updateUserValidator = vine.compile(
     email: vine.string().trim().email().optional(),
     senha: vine.string().trim().minLength(6).optional(),
     tipo: vine.enum(['dono', 'mecanico'] as const).optional(),
+    ativo: vine.boolean().optional(),
   })
 )
 
@@ -23,4 +25,5 @@ export type CreateUserInput = {
   email: string
   senha: string
   tipo: 'dono' | 'mecanico'
+  ativo?: boolean
 }

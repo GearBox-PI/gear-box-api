@@ -24,7 +24,7 @@ export default class Budget extends BaseModel {
   declare carId: string
 
   @column({ columnName: 'user_id' })
-  declare userId: string
+  declare userId: string | null
 
   @column()
   declare description: string

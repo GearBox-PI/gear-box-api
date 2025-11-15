@@ -17,7 +17,7 @@ export default class extends BaseSchema {
       table.uuid('id').primary()
       table.uuid('client_id').notNullable()
       table.uuid('car_id').notNullable()
-      table.uuid('user_id').notNullable()
+      table.uuid('user_id').nullable()
 
       table.timestamp('created_at', { useTz: true }).defaultTo(this.now())
 

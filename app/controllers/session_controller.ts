@@ -12,6 +12,10 @@ export default class SessionController {
     // Usa o método verifyCredentials do AuthFinder que já está configurado no modelo
     const user = await User.verifyCredentials(email, password)
 
+    if (!user.ativo) {
+      return response.unauthorized({ error: 'Usuário desativado.' })
+    }
+
     // Cria token de acesso com abilities específicas do perfil
     const abilities = getAbilitiesForRole(user.tipo)
     const token = await User.accessTokens.create(user, abilities)

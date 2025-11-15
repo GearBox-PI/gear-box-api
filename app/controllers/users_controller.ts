@@ -1,6 +1,9 @@
 import User from '#models/user'
+import Budget from '#models/budget'
+import Service from '#models/service'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createUserValidator, updateUserValidator } from '#validators/users_validator'
+import db from '@adonisjs/lucid/services/db'
 
 export default class UsersController {
   // Lista usuários (apenas dono)
@@ -30,6 +33,7 @@ export default class UsersController {
       nome: user.nome,
       email: user.email,
       tipo: user.tipo,
+      ativo: user.ativo,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -49,13 +53,17 @@ export default class UsersController {
       return response.unprocessableEntity({ errors: [{ message: 'E-mail já está em uso.' }] })
     }
 
-    const user = await User.create(payload)
+    const user = await User.create({
+      ...payload,
+      ativo: payload.ativo ?? true,
+    })
 
     return response.created({
       id: user.id,
       nome: user.nome,
       email: user.email,
       tipo: user.tipo,
+      ativo: user.ativo,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     })
@@ -90,6 +98,7 @@ export default class UsersController {
       if (typeof data.email !== 'undefined') user.email = data.email
       if (typeof data.senha !== 'undefined') user.senha = data.senha
       if (typeof data.tipo !== 'undefined') user.tipo = data.tipo
+      if (typeof data.ativo !== 'undefined') user.ativo = data.ativo
     } else if (isSelf) {
       // mecânico só pode alterar nome/senha do próprio
       if (typeof data.nome !== 'undefined') user.nome = data.nome
@@ -104,25 +113,59 @@ export default class UsersController {
       nome: user.nome,
       email: user.email,
       tipo: user.tipo,
+      ativo: user.ativo,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
   }
 
-  // Remove usuário (apenas dono) – segurança: não remove a si mesmo
-  async destroy({ auth, params, response }: HttpContext) {
+  // Remove usuário (apenas dono). Mecânicos são desativados com opção de transferência.
+  async destroy({ auth, params, request, response }: HttpContext) {
     const { id } = params
 
     if (auth.user?.tipo !== 'dono') {
       return response.forbidden({ error: 'Apenas donos podem remover usuários.' })
     }
 
-    if (auth.user?.id === id) {
-      return response.badRequest({ error: 'Você não pode remover o próprio usuário.' })
+    const user = await User.findOrFail(id)
+
+    if (user.tipo === 'mecanico') {
+      const transferToUserId = request.input('transferToUserId')
+
+      if (transferToUserId) {
+        if (transferToUserId === user.id) {
+          return response.badRequest({ error: 'Não é possível transferir para o mesmo usuário.' })
+        }
+
+        const targetMechanic = await User.query()
+          .where('id', transferToUserId)
+          .where('tipo', 'mecanico')
+          .where('ativo', true)
+          .first()
+
+        if (!targetMechanic) {
+          return response.badRequest({ error: 'Mecânico de destino inválido ou inativo.' })
+        }
+
+        await Budget.query().where('user_id', user.id).update({ userId: targetMechanic.id })
+        await Service.query().where('user_id', user.id).update({ userId: targetMechanic.id })
+      }
+
+      user.ativo = false
+      await user.save()
+      await db.from('auth_access_tokens').where('tokenable_id', user.id).delete()
+
+      return response.ok({ message: 'Mecânico desativado com sucesso.' })
     }
 
-    const user = await User.findOrFail(id)
+    const isSelfRemoval = auth.user?.id === user.id
+
     await user.delete()
+    await db.from('auth_access_tokens').where('tokenable_id', user.id).delete()
+
+    if (isSelfRemoval) {
+      return response.ok({ message: 'Conta removida com sucesso.' })
+    }
 
     return response.noContent()
   }

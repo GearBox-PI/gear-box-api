@@ -44,6 +44,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column({ columnName: 'tipo' })
   declare tipo: 'dono' | 'mecanico'
 
+  @column()
+  declare ativo: boolean
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
