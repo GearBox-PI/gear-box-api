@@ -114,6 +114,18 @@ router
   })
   .use(middleware.auth())
 
+router
+  .group(() => {
+    router.get('/budgets', '#controllers/budgets_controller.index')
+    router.get('/budgets/:id', '#controllers/budgets_controller.show')
+    router.post('/budgets', '#controllers/budgets_controller.store')
+    router.put('/budgets/:id', '#controllers/budgets_controller.update')
+    router.patch('/budgets/:id', '#controllers/budgets_controller.update')
+    router.delete('/budgets/:id', '#controllers/budgets_controller.destroy')
+    router.post('/budgets/:id/accept', '#controllers/budgets_controller.accept')
+  })
+  .use(middleware.auth())
+
 router.get('/docs/openapi.yaml', async ({ response }) => {
   const yamlPath = app.makePath('docs', 'openapi.yaml')
   const ymlPath = app.makePath('docs', 'openapi.yml')

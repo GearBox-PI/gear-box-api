@@ -1,20 +1,20 @@
+import { BaseModel, beforeCreate, belongsTo, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
-import { BaseModel, beforeCreate, column, belongsTo } from '@adonisjs/lucid/orm'
 import { randomUUID } from 'node:crypto'
+import * as relations from '@adonisjs/lucid/types/relations'
 import Client from './client.js'
 import Car from './car.js'
-import * as relations from '@adonisjs/lucid/types/relations'
 import User from './user.js'
 
-export default class Service extends BaseModel {
-  public static table = 'services'
+export default class Budget extends BaseModel {
+  public static table = 'budgets'
 
   @column({ isPrimary: true })
   declare id: string
 
   @beforeCreate()
-  static setId(service: Service) {
-    if (!service.id) service.id = randomUUID()
+  static assignId(budget: Budget) {
+    if (!budget.id) budget.id = randomUUID()
   }
 
   @column({ columnName: 'client_id' })
@@ -24,16 +24,16 @@ export default class Service extends BaseModel {
   declare carId: string
 
   @column({ columnName: 'user_id' })
-  declare userId?: string | null
+  declare userId: string
 
   @column()
-  declare status: 'Pendente' | 'Em andamento' | 'Concluído' | 'Cancelado'
+  declare description: string
 
   @column()
-  declare description?: string | null
+  declare amount: string
 
-  @column({ columnName: 'total_value' })
-  declare totalValue: string
+  @column()
+  declare status: 'aberto' | 'aceito' | 'recusado' | 'cancelado'
 
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime

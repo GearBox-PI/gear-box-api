@@ -23,7 +23,7 @@ export default class ServicesController {
   }
 
   // Criar serviço (dono e mecânico)
-  async store({ request, response }: HttpContext) {
+  async store({ auth, request, response }: HttpContext) {
     const payload = await createServiceValidator.validate(request.all())
 
     // Valida client/car existentes
@@ -42,6 +42,7 @@ export default class ServicesController {
     const service = await Service.create({
       clientId: payload.clientId,
       carId: payload.carId,
+      userId: auth.user?.id ?? null,
       status: payload.status ?? 'Pendente',
       description: payload.description,
       totalValue: String(payload.totalValue ?? 0),
