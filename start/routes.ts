@@ -123,6 +123,7 @@ router
     router.patch('/budgets/:id', '#controllers/budgets_controller.update')
     router.delete('/budgets/:id', '#controllers/budgets_controller.destroy')
     router.post('/budgets/:id/accept', '#controllers/budgets_controller.accept')
+    router.post('/budgets/:id/reject', '#controllers/budgets_controller.reject')
   })
   .use(middleware.auth())
 

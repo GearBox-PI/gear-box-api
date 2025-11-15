@@ -13,16 +13,22 @@ const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 
 export default class BudgetsController {
-  async index({ request }: HttpContext) {
+  async index({ request, auth }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
 
-    return Budget.query().orderBy('created_at', 'desc').paginate(page, perPage)
+    const query = Budget.query().orderBy('created_at', 'desc')
+    if (auth.user?.tipo === MECHANIC_ROLE) {
+      query.where('user_id', auth.user.id)
+    }
+    return query.paginate(page, perPage)
   }
 
-  async show({ params, response }: HttpContext) {
+  async show({ params, response, auth }: HttpContext) {
     const budget = await Budget.find(params.id)
     if (!budget) return response.notFound(BUDGET_NOT_FOUND)
+    if (auth.user?.tipo === MECHANIC_ROLE && budget.userId !== auth.user.id)
+      return response.forbidden({ error: 'Sem permissão para visualizar este orçamento' })
     return budget
   }
 
@@ -138,5 +144,22 @@ export default class BudgetsController {
       await trx.rollback()
       throw error
     }
+  }
+
+  async reject({ auth, params, response }: HttpContext) {
+    if (!auth.user || ![MECHANIC_ROLE, ADMIN_ROLE].includes(auth.user.tipo))
+      return response.forbidden(ACCEPT_FORBIDDEN)
+
+    const budget = await Budget.find(params.id)
+    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
+
+    if (budget.status !== 'aberto')
+      return response.unprocessableEntity({
+        errors: [{ field: 'status', message: 'Apenas orçamentos abertos podem ser recusados' }],
+      })
+
+    budget.status = 'recusado'
+    await budget.save()
+    return budget
   }
 }

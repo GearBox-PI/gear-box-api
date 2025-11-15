@@ -78,6 +78,17 @@ export default class extends BaseSeeder {
       const identifier = client.email ? { email: client.email } : { telefone: client.telefone }
       const record = await Client.updateOrCreate(identifier, client)
       const key = client.email ?? client.telefone
+      let shouldSave = false
+
+      if (!record.createdBy && defaultMechanic) {
+        record.createdBy = defaultMechanic.id
+        shouldSave = true
+      }
+
+      if (shouldSave) {
+        await record.save()
+      }
+
       clientsMap.set(key, record)
     }
 
