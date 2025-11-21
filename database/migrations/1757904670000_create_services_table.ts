@@ -32,12 +32,16 @@ export default class extends BaseSchema {
 
       table.text('description')
       table.decimal('total_value', 12, 2).notNullable().defaultTo(0)
+      table.uuid('budget_id').nullable()
+      table.uuid('updated_by').nullable()
 
       table.timestamp('updated_at', { useTz: true }).defaultTo(this.now())
 
       table.foreign('client_id').references('clients.id').onDelete('CASCADE')
       table.foreign('car_id').references('cars.id').onDelete('CASCADE')
       table.foreign('user_id').references('users.id').onDelete('SET NULL')
+      table.foreign('budget_id').references('budgets.id').onDelete('SET NULL')
+      table.foreign('updated_by').references('users.id').onDelete('SET NULL')
     })
   }
 

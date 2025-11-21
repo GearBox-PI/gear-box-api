@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, beforeCreate, column, belongsTo } from '@adonisjs/lucid/orm'
 import { randomUUID } from 'node:crypto'
+import Budget from './budget.js'
 import Client from './client.js'
 import Car from './car.js'
 import * as relations from '@adonisjs/lucid/types/relations'
@@ -26,6 +27,9 @@ export default class Service extends BaseModel {
   @column({ columnName: 'user_id' })
   declare userId?: string | null
 
+  @column({ columnName: 'budget_id' })
+  declare budgetId?: string | null
+
   @column()
   declare status: 'Pendente' | 'Em andamento' | 'Concluído' | 'Cancelado'
 
@@ -34,6 +38,9 @@ export default class Service extends BaseModel {
 
   @column({ columnName: 'total_value' })
   declare totalValue: string
+
+  @column({ columnName: 'updated_by' })
+  declare updatedById?: string | null
 
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
@@ -49,4 +56,10 @@ export default class Service extends BaseModel {
 
   @belongsTo(() => User)
   declare user: relations.BelongsTo<typeof User>
+
+  @belongsTo(() => User, { foreignKey: 'updated_by' })
+  declare updatedBy: relations.BelongsTo<typeof User>
+
+  @belongsTo(() => Budget)
+  declare budget: relations.BelongsTo<typeof Budget>
 }

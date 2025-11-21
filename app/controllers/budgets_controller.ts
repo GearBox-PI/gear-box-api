@@ -8,7 +8,21 @@ import db from '@adonisjs/lucid/services/db'
 
 const BUDGET_NOT_FOUND = { error: 'Orçamento não encontrado' }
 const CREATE_FORBIDDEN = { error: 'Apenas mecânicos ou administradores podem criar orçamentos' }
-const ACCEPT_FORBIDDEN = { error: 'Apenas mecânicos ou administradores podem aceitar orçamentos' }
+const VIEW_FORBIDDEN = {
+  error:
+    'Você não tem permissão para acessar este registro. Apenas o responsável pelo orçamento/serviço ou o dono podem visualizar este conteúdo.',
+}
+const EDIT_FORBIDDEN = {
+  error:
+    'Você não tem permissão para editar este registro. Somente o responsável pelo orçamento/serviço pode realizar alterações, ou o dono do sistema.',
+}
+const UPDATE_FORBIDDEN = {
+  error:
+    'A atualização não pode ser realizada. Este orçamento/serviço não foi criado por você. Apenas o responsável ou o dono têm permissão para modificar este item.',
+}
+const ACCEPT_FORBIDDEN = {
+  error: 'Você não tem permissão para atualizar o status deste orçamento. Somente o dono pode aceitar ou recusar.',
+}
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 
@@ -17,7 +31,10 @@ export default class BudgetsController {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
 
-    const query = Budget.query().orderBy('created_at', 'desc')
+    const query = Budget.query()
+      .preload('user')
+      .preload('updatedBy')
+      .orderBy('created_at', 'desc')
     if (auth.user?.tipo === MECHANIC_ROLE) {
       query.where('user_id', auth.user.id)
     }
@@ -25,10 +42,14 @@ export default class BudgetsController {
   }
 
   async show({ params, response, auth }: HttpContext) {
-    const budget = await Budget.find(params.id)
+    const budget = await Budget.query()
+      .where('id', params.id)
+      .preload('user')
+      .preload('updatedBy')
+      .first()
     if (!budget) return response.notFound(BUDGET_NOT_FOUND)
     if (auth.user?.tipo === MECHANIC_ROLE && budget.userId !== auth.user.id)
-      return response.forbidden({ error: 'Sem permissão para visualizar este orçamento' })
+      return response.forbidden(VIEW_FORBIDDEN)
     return budget
   }
 
@@ -57,19 +78,30 @@ export default class BudgetsController {
       description: payload.description,
       amount: String(payload.amount),
       status: payload.status ?? 'aberto',
+      updatedById: auth.user.id,
     })
 
     return response.created(budget)
   }
 
+
   async update({ auth, params, request, response }: HttpContext) {
-    if (auth.user?.tipo !== ADMIN_ROLE)
-      return response.forbidden({ error: 'Apenas administradores podem atualizar' })
+    const isOwner = auth.user?.tipo === ADMIN_ROLE
+    const isMechanic = auth.user?.tipo === MECHANIC_ROLE
+    // Verifica se o usuário possui o papel necessário
+    if (!isOwner && !isMechanic) return response.forbidden(UPDATE_FORBIDDEN)
 
     const budget = await Budget.find(params.id)
     if (!budget) return response.notFound(BUDGET_NOT_FOUND)
 
+    // Garante que o mecânico só mexa em orçamentos pelos quais é responsável
+    if (isMechanic && budget.userId !== auth.user?.id) return response.forbidden(EDIT_FORBIDDEN)
+
     const data = await updateBudgetValidator.validate(request.all())
+    // Impede que mecânicos alterem o status do orçamento
+    if (!isOwner) {
+      delete (data as any).status
+    }
 
     if (data.clientId) {
       const client = await Client.find(data.clientId)
@@ -92,6 +124,7 @@ export default class BudgetsController {
     }
 
     budget.merge(data as any)
+    budget.updatedById = auth.user?.id ?? null
     await budget.save()
     return budget
   }
@@ -108,7 +141,7 @@ export default class BudgetsController {
   }
 
   async accept({ auth, params, response }: HttpContext) {
-    if (!auth.user || ![MECHANIC_ROLE, ADMIN_ROLE].includes(auth.user.tipo))
+    if (auth.user?.tipo !== ADMIN_ROLE)
       return response.forbidden(ACCEPT_FORBIDDEN)
 
     const budget = await Budget.find(params.id)
@@ -123,6 +156,7 @@ export default class BudgetsController {
     try {
       budget.useTransaction(trx)
       budget.status = 'aceito'
+      budget.updatedById = auth.user?.id ?? null
       await budget.save()
 
       const service = await Service.create(
@@ -133,6 +167,8 @@ export default class BudgetsController {
           description: budget.description,
           totalValue: budget.amount,
           userId: auth.user.id,
+          budgetId: budget.id,
+          updatedById: auth.user.id,
         },
         { client: trx }
       )
@@ -147,7 +183,7 @@ export default class BudgetsController {
   }
 
   async reject({ auth, params, response }: HttpContext) {
-    if (!auth.user || ![MECHANIC_ROLE, ADMIN_ROLE].includes(auth.user.tipo))
+    if (auth.user?.tipo !== ADMIN_ROLE)
       return response.forbidden(ACCEPT_FORBIDDEN)
 
     const budget = await Budget.find(params.id)
@@ -159,6 +195,7 @@ export default class BudgetsController {
       })
 
     budget.status = 'recusado'
+    budget.updatedById = auth.user?.id ?? null
     await budget.save()
     return budget
   }

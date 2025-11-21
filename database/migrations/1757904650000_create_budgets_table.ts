@@ -30,9 +30,11 @@ export default class extends BaseSchema {
       table.timestamp('created_at', { useTz: true }).defaultTo(this.now())
       table.timestamp('updated_at', { useTz: true }).defaultTo(this.now())
 
+      table.uuid('updated_by').nullable()
       table.foreign('client_id').references('clients.id').onDelete('CASCADE')
       table.foreign('car_id').references('cars.id').onDelete('CASCADE')
       table.foreign('user_id').references('users.id').onDelete('SET NULL')
+      table.foreign('updated_by').references('users.id').onDelete('SET NULL')
     })
   }
 
