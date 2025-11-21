@@ -53,6 +53,6 @@ export default class Budget extends BaseModel {
   @belongsTo(() => User)
   declare user: relations.BelongsTo<typeof User>
 
-  @belongsTo(() => User, { foreignKey: 'updated_by' })
+  @belongsTo(() => User, { foreignKey: 'updatedById' })
   declare updatedBy: relations.BelongsTo<typeof User>
 }

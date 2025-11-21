@@ -22,6 +22,12 @@ export const updateBudgetValidator = vine.compile(
   })
 )
 
+export const acceptBudgetValidator = vine.compile(
+  vine.object({
+    assignedToId: vine.string().uuid(),
+  })
+)
+
 export type CreateBudgetInput = {
   clientId: string
   carId: string

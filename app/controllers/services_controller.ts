@@ -34,7 +34,10 @@ export default class ServicesController {
     if (auth.user?.tipo === MECHANIC_ROLE) {
       const mechanicId = auth.user.id
       query.where((builder) =>
-        builder.where('user_id', mechanicId).orWhereHas('budget', (budgetQuery) => budgetQuery.where('user_id', mechanicId))
+        builder
+          .where('assigned_to', mechanicId)
+          .orWhere('user_id', mechanicId)
+          .orWhereHas('budget', (budgetQuery) => budgetQuery.where('user_id', mechanicId))
       )
     }
 
@@ -52,10 +55,12 @@ export default class ServicesController {
       .preload('budget', (budgetQuery) => budgetQuery.preload('user'))
       .first()
     if (!service) return response.notFound({ error: 'Serviço não encontrado' })
+    const mechanicId = auth.user?.id
+    const assignedUserId = service.assignedToId ?? service.userId
     if (
       auth.user?.tipo === MECHANIC_ROLE &&
-      service.userId !== auth.user.id &&
-      service.budget?.userId !== auth.user.id
+      mechanicId !== assignedUserId &&
+      mechanicId !== service.budget?.userId
     )
       return response.forbidden(VIEW_FORBIDDEN)
     return service
@@ -87,6 +92,8 @@ export default class ServicesController {
       totalValue: String(payload.totalValue ?? 0),
       budgetId: null,
       updatedById: auth.user?.id ?? null,
+      assignedToId: auth.user?.id ?? null,
+      createdById: auth.user?.id ?? null,
     })
 
     return response.created(service)
@@ -95,7 +102,7 @@ export default class ServicesController {
   // Atualizar serviço (dono ou mecânico para status)
   async update({ auth, params, request, response }: HttpContext) {
     const { id } = params
-    const service = await Service.find(id)
+    const service = await Service.query().where('id', id).preload('budget').first()
     if (!service) return response.notFound({ error: 'Serviço não encontrado' })
 
     const userRole = auth.user?.tipo
@@ -103,8 +110,14 @@ export default class ServicesController {
     const isMechanic = userRole === MECHANIC_ROLE
     // Valida se o usuário é dono ou mecânico antes de permitir a atualização
     if (!isOwner && !isMechanic) return response.forbidden(UPDATE_FORBIDDEN)
-    // O mecânico só pode atualizar serviços pelos quais é responsável
-    if (isMechanic && service.userId !== auth.user?.id) return response.forbidden(EDIT_FORBIDDEN)
+    const mechanicId = auth.user?.id
+    const assignedUserId = service.assignedToId ?? service.userId
+    if (
+      isMechanic &&
+      mechanicId !== assignedUserId &&
+      mechanicId !== service.budget?.userId
+    )
+      return response.forbidden(EDIT_FORBIDDEN)
 
     const data = await updateServiceValidator.validate(request.all())
 

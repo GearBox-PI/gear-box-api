@@ -16,6 +16,8 @@ tags:
   - name: Clients
   - name: Cars
   - name: Services
+  - name: Budgets
+    description: Fluxo de orçamentos
 
 paths:
   /login:
@@ -459,6 +461,44 @@ paths:
         '204': { description: No Content }
         '404': { description: Não encontrado }
 
+  /budgets/{id}/accept:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Budgets]
+      summary: Aprovar orçamento e gerar serviço
+      description: Só administradores podem aceitar um orçamento e delegar um responsável ativo.
+      x-required-role: dono
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetAcceptInput'
+      responses:
+        '200':
+          description: Orçamento aceito e serviço criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetAcceptResponse'
+        '401': { description: Não autenticado }
+        '403': { description: Sem permissão }
+        '404': { description: Orçamento não encontrado }
+        '422':
+          description: Usuário delegado inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -595,6 +635,11 @@ components:
         status: { type: string, enum: ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'] }
         description: { type: string }
         totalValue: { type: string }
+        budgetId: { type: string, format: uuid, nullable: true }
+        userId: { type: string, format: uuid, nullable: true }
+        assignedToId: { type: string, format: uuid, nullable: true }
+        createdById: { type: string, format: uuid, nullable: true }
+        updatedById: { type: string, format: uuid, nullable: true }
       required: [id, clientId, carId, status, totalValue]
 
     ServiceCreateInput:
@@ -613,6 +658,35 @@ components:
         status: { type: string, enum: ['Pendente', 'Em andamento', 'Concluído', 'Cancelado'] }
         description: { type: string }
         totalValue: { type: number }
+
+    Budget:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clientId: { type: string, format: uuid }
+        carId: { type: string, format: uuid }
+        userId: { type: string, format: uuid, nullable: true }
+        updatedById: { type: string, format: uuid, nullable: true }
+        description: { type: string }
+        amount: { type: string }
+        status: { type: string, enum: ['aberto', 'aceito', 'recusado', 'cancelado'] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, clientId, carId, description, amount, status, createdAt, updatedAt]
+
+    BudgetAcceptInput:
+      type: object
+      properties:
+        assignedToId: { type: string, format: uuid }
+      required: [assignedToId]
+
+    BudgetAcceptResponse:
+      type: object
+      properties:
+        budget:
+          $ref: '#/components/schemas/Budget'
+        service:
+          $ref: '#/components/schemas/Service'
 
     PaginatedUsers:
       type: object

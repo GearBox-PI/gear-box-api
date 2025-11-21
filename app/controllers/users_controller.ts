@@ -127,6 +127,8 @@ export default class UsersController {
       return response.forbidden({ error: 'Apenas donos podem remover usuários.' })
     }
 
+    const adminId = auth.user?.id ?? null
+
     const user = await User.findOrFail(id)
 
     if (user.tipo === 'mecanico') {
@@ -147,8 +149,12 @@ export default class UsersController {
           return response.badRequest({ error: 'Mecânico de destino inválido ou inativo.' })
         }
 
-        await Budget.query().where('user_id', user.id).update({ userId: targetMechanic.id })
-        await Service.query().where('user_id', user.id).update({ userId: targetMechanic.id })
+        await Budget.query()
+          .where('user_id', user.id)
+          .update({ userId: targetMechanic.id, updatedById: adminId })
+        await Service.query()
+          .where('user_id', user.id)
+          .update({ userId: targetMechanic.id, updatedById: adminId })
       }
 
       user.ativo = false

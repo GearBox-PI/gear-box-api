@@ -42,6 +42,12 @@ export default class Service extends BaseModel {
   @column({ columnName: 'updated_by' })
   declare updatedById?: string | null
 
+  @column({ columnName: 'assigned_to' })
+  declare assignedToId?: string | null
+
+  @column({ columnName: 'created_by' })
+  declare createdById?: string | null
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
@@ -57,8 +63,14 @@ export default class Service extends BaseModel {
   @belongsTo(() => User)
   declare user: relations.BelongsTo<typeof User>
 
-  @belongsTo(() => User, { foreignKey: 'updated_by' })
+  @belongsTo(() => User, { foreignKey: 'updatedById' })
   declare updatedBy: relations.BelongsTo<typeof User>
+
+  @belongsTo(() => User, { foreignKey: 'assignedToId' })
+  declare assignedTo: relations.BelongsTo<typeof User>
+
+  @belongsTo(() => User, { foreignKey: 'createdById' })
+  declare createdBy: relations.BelongsTo<typeof User>
 
   @belongsTo(() => Budget)
   declare budget: relations.BelongsTo<typeof Budget>

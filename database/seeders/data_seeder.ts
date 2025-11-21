@@ -156,6 +156,78 @@ export default class extends BaseSeeder {
       carsMap.set(car.placa, record)
     }
 
+    const budgetsData: BudgetSeed[] = [
+      {
+        clientKey: 'joao.silva@email.com',
+        placa: 'ABC1D23',
+        userEmail: 'mec1@gearbox.com',
+        status: 'aberto',
+        description: 'Diagnóstico completo do motor',
+        amount: 750,
+      },
+      {
+        clientKey: 'maria.santos@email.com',
+        placa: 'DEF4G56',
+        userEmail: 'mec2@gearbox.com',
+        status: 'aceito',
+        description: 'Reparo no sistema de suspensão',
+        amount: 1580,
+      },
+      {
+        clientKey: 'pedro.oliveira@email.com',
+        placa: 'GHI7J89',
+        userEmail: 'mec3@gearbox.com',
+        status: 'recusado',
+        description: 'Troca do sistema de escapamento',
+        amount: 980,
+      },
+      {
+        clientKey: 'ana.costa@email.com',
+        placa: 'JKL0M12',
+        userEmail: 'mec2@gearbox.com',
+        status: 'cancelado',
+        description: 'Instalação de central multimídia',
+        amount: 1450,
+      },
+      {
+        clientKey: 'carlos.souza@email.com',
+        placa: 'MNO3P45',
+        userEmail: 'mec1@gearbox.com',
+        status: 'aberto',
+        description: 'Revisão elétrica completa',
+        amount: 520,
+      },
+    ]
+
+    const budgetMap = new Map<string, Budget[]>()
+
+    for (const budget of budgetsData) {
+      const client = clientsMap.get(budget.clientKey)
+      const car = carsMap.get(budget.placa)
+      const user = usersMap.get(budget.userEmail)
+
+      if (!client || !car || !user) continue
+
+      const record = await Budget.updateOrCreate(
+        {
+          carId: car.id,
+          description: budget.description,
+          status: budget.status,
+        },
+        {
+          clientId: client.id,
+          carId: car.id,
+          userId: user.id,
+          description: budget.description,
+          status: budget.status,
+          amount: budget.amount.toFixed(2),
+          updatedById: user.id,
+        }
+      )
+
+      budgetMap.set(car.id, [...(budgetMap.get(car.id) ?? []), record])
+    }
+
     const servicesData: ServiceSeed[] = [
       {
         clientKey: 'joao.silva@email.com',
@@ -214,6 +286,10 @@ export default class extends BaseSeeder {
 
       if (!serviceUser) continue
 
+      const budgetsForCar = budgetMap.get(car.id) ?? []
+      const budgetReference =
+        budgetsForCar.find((record) => record.status === 'aceito') ?? budgetsForCar[0] ?? null
+
       await Service.updateOrCreate(
         {
           carId: car.id,
@@ -226,75 +302,13 @@ export default class extends BaseSeeder {
           status: service.status,
           description: service.description,
           totalValue: service.totalValue.toFixed(2),
+          budgetId: budgetReference?.id ?? null,
+          updatedById: serviceUser.id,
+          assignedToId: serviceUser.id,
+          createdById: serviceUser.id,
         }
       )
     }
 
-    const budgetsData: BudgetSeed[] = [
-      {
-        clientKey: 'joao.silva@email.com',
-        placa: 'ABC1D23',
-        userEmail: 'mec1@gearbox.com',
-        status: 'aberto',
-        description: 'Diagnóstico completo do motor',
-        amount: 750,
-      },
-      {
-        clientKey: 'maria.santos@email.com',
-        placa: 'DEF4G56',
-        userEmail: 'mec2@gearbox.com',
-        status: 'aceito',
-        description: 'Reparo no sistema de suspensão',
-        amount: 1580,
-      },
-      {
-        clientKey: 'pedro.oliveira@email.com',
-        placa: 'GHI7J89',
-        userEmail: 'mec3@gearbox.com',
-        status: 'recusado',
-        description: 'Troca do sistema de escapamento',
-        amount: 980,
-      },
-      {
-        clientKey: 'ana.costa@email.com',
-        placa: 'JKL0M12',
-        userEmail: 'mec2@gearbox.com',
-        status: 'cancelado',
-        description: 'Instalação de central multimídia',
-        amount: 1450,
-      },
-      {
-        clientKey: 'carlos.souza@email.com',
-        placa: 'MNO3P45',
-        userEmail: 'mec1@gearbox.com',
-        status: 'aberto',
-        description: 'Revisão elétrica completa',
-        amount: 520,
-      },
-    ]
-
-    for (const budget of budgetsData) {
-      const client = clientsMap.get(budget.clientKey)
-      const car = carsMap.get(budget.placa)
-      const user = usersMap.get(budget.userEmail)
-
-      if (!client || !car || !user) continue
-
-      await Budget.updateOrCreate(
-        {
-          carId: car.id,
-          description: budget.description,
-          status: budget.status,
-        },
-        {
-          clientId: client.id,
-          carId: car.id,
-          userId: user.id,
-          description: budget.description,
-          status: budget.status,
-          amount: budget.amount.toFixed(2),
-        }
-      )
-    }
   }
 }

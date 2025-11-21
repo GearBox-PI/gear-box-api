@@ -3,7 +3,12 @@ import Budget from '#models/budget'
 import Client from '#models/client'
 import Car from '#models/car'
 import Service from '#models/service'
-import { createBudgetValidator, updateBudgetValidator } from '#validators/budgets_validator'
+import User from '#models/user'
+import {
+  createBudgetValidator,
+  updateBudgetValidator,
+  acceptBudgetValidator,
+} from '#validators/budgets_validator'
 import db from '@adonisjs/lucid/services/db'
 
 const BUDGET_NOT_FOUND = { error: 'Orçamento não encontrado' }
@@ -140,16 +145,37 @@ export default class BudgetsController {
     return response.noContent()
   }
 
-  async accept({ auth, params, response }: HttpContext) {
-    if (auth.user?.tipo !== ADMIN_ROLE)
-      return response.forbidden(ACCEPT_FORBIDDEN)
-
+  async accept({ auth, params, request, response }: HttpContext) {
     const budget = await Budget.find(params.id)
     if (!budget) return response.notFound(BUDGET_NOT_FOUND)
+
+    const isOwner = auth.user?.tipo === ADMIN_ROLE
+    const isBudgetMechanic =
+      auth.user?.tipo === MECHANIC_ROLE && budget.userId === auth.user?.id
+
+    if (!isOwner && !isBudgetMechanic) return response.forbidden(ACCEPT_FORBIDDEN)
 
     if (budget.status !== 'aberto')
       return response.unprocessableEntity({
         errors: [{ field: 'status', message: 'Apenas orçamentos abertos podem ser aceitos' }],
+      })
+
+    const payload = await acceptBudgetValidator.validate(request.all())
+
+    const assignedUser = await User.query()
+      .where('id', payload.assignedToId)
+      .where('ativo', true)
+      .whereIn('tipo', [MECHANIC_ROLE, ADMIN_ROLE])
+      .first()
+
+    if (!assignedUser)
+      return response.unprocessableEntity({
+        errors: [
+          {
+            field: 'assignedToId',
+            message: 'Escolha um usuário ativo com papel de mecânico ou dono.',
+          },
+        ],
       })
 
     const trx = await db.transaction()
@@ -166,9 +192,11 @@ export default class BudgetsController {
           status: 'Pendente',
           description: budget.description,
           totalValue: budget.amount,
-          userId: auth.user.id,
+          userId: assignedUser.id,
           budgetId: budget.id,
           updatedById: auth.user.id,
+          assignedToId: assignedUser.id,
+          createdById: auth.user.id,
         },
         { client: trx }
       )
@@ -183,11 +211,14 @@ export default class BudgetsController {
   }
 
   async reject({ auth, params, response }: HttpContext) {
-    if (auth.user?.tipo !== ADMIN_ROLE)
-      return response.forbidden(ACCEPT_FORBIDDEN)
-
     const budget = await Budget.find(params.id)
     if (!budget) return response.notFound(BUDGET_NOT_FOUND)
+
+    const isOwner = auth.user?.tipo === ADMIN_ROLE
+    const isBudgetMechanic =
+      auth.user?.tipo === MECHANIC_ROLE && budget.userId === auth.user?.id
+
+    if (!isOwner && !isBudgetMechanic) return response.forbidden(ACCEPT_FORBIDDEN)
 
     if (budget.status !== 'aberto')
       return response.unprocessableEntity({
