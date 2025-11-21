@@ -19,6 +19,7 @@ export default class extends BaseSchema {
       table.uuid('user_id').nullable()
       table.text('description').notNullable()
       table.decimal('amount', 10, 2).notNullable()
+      table.integer('prazo_estimado_dias').nullable()
       table
         .enum('status', ['aberto', 'aceito', 'recusado', 'cancelado'], {
           useNative: true,

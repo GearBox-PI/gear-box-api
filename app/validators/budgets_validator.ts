@@ -9,6 +9,7 @@ export const createBudgetValidator = vine.compile(
     description: vine.string().trim().minLength(3),
     amount: vine.number().min(0),
     status: vine.enum(STATUS_OPTIONS).optional(),
+    prazoEstimadoDias: vine.number().min(0).optional(),
   })
 )
 
@@ -19,6 +20,7 @@ export const updateBudgetValidator = vine.compile(
     description: vine.string().trim().minLength(3).optional(),
     amount: vine.number().min(0).optional(),
     status: vine.enum(STATUS_OPTIONS).optional(),
+    prazoEstimadoDias: vine.number().min(0).optional(),
   })
 )
 

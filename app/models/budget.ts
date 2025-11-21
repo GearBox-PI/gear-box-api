@@ -38,6 +38,9 @@ export default class Budget extends BaseModel {
   @column()
   declare status: 'aberto' | 'aceito' | 'recusado' | 'cancelado'
 
+  @column({ columnName: 'prazo_estimado_dias' })
+  declare prazoEstimadoDias?: number | null
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 

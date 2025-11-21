@@ -32,6 +32,8 @@ export default class extends BaseSchema {
 
       table.text('description')
       table.decimal('total_value', 12, 2).notNullable().defaultTo(0)
+      table.integer('prazo_estimado_dias').nullable()
+      table.timestamp('data_prevista', { useTz: true }).nullable()
       table.uuid('budget_id').nullable()
       table.uuid('updated_by').nullable()
 

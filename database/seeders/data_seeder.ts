@@ -4,6 +4,7 @@ import Car from '#models/car'
 import Service from '#models/service'
 import Budget from '#models/budget'
 import User from '#models/user'
+import { DateTime } from 'luxon'
 
 type ClientSeed = {
   nome: string
@@ -26,6 +27,8 @@ type ServiceSeed = {
   description: string
   totalValue: number
   userEmail?: string
+  prazoEstimadoDias?: number
+  dataPrevistaOffsetDays?: number
 }
 
 type BudgetSeed = {
@@ -35,6 +38,7 @@ type BudgetSeed = {
   status: 'aberto' | 'aceito' | 'recusado' | 'cancelado'
   description: string
   amount: number
+  prazoEstimadoDias?: number
 }
 
 export default class extends BaseSeeder {
@@ -164,6 +168,7 @@ export default class extends BaseSeeder {
         status: 'aberto',
         description: 'Diagnóstico completo do motor',
         amount: 750,
+        prazoEstimadoDias: 5,
       },
       {
         clientKey: 'maria.santos@email.com',
@@ -172,6 +177,7 @@ export default class extends BaseSeeder {
         status: 'aceito',
         description: 'Reparo no sistema de suspensão',
         amount: 1580,
+        prazoEstimadoDias: 10,
       },
       {
         clientKey: 'pedro.oliveira@email.com',
@@ -180,6 +186,7 @@ export default class extends BaseSeeder {
         status: 'recusado',
         description: 'Troca do sistema de escapamento',
         amount: 980,
+        prazoEstimadoDias: 4,
       },
       {
         clientKey: 'ana.costa@email.com',
@@ -188,6 +195,7 @@ export default class extends BaseSeeder {
         status: 'cancelado',
         description: 'Instalação de central multimídia',
         amount: 1450,
+        prazoEstimadoDias: 7,
       },
       {
         clientKey: 'carlos.souza@email.com',
@@ -196,6 +204,7 @@ export default class extends BaseSeeder {
         status: 'aberto',
         description: 'Revisão elétrica completa',
         amount: 520,
+        prazoEstimadoDias: 3,
       },
     ]
 
@@ -222,6 +231,7 @@ export default class extends BaseSeeder {
           status: budget.status,
           amount: budget.amount.toFixed(2),
           updatedById: user.id,
+          prazoEstimadoDias: budget.prazoEstimadoDias ?? null,
         }
       )
 
@@ -235,6 +245,9 @@ export default class extends BaseSeeder {
         status: 'Em andamento',
         description: 'Troca de óleo e filtros',
         totalValue: 450,
+        userEmail: 'mec1@gearbox.com',
+        prazoEstimadoDias: 5,
+        dataPrevistaOffsetDays: 3,
       },
       {
         clientKey: 'maria.santos@email.com',
@@ -242,6 +255,9 @@ export default class extends BaseSeeder {
         status: 'Pendente',
         description: 'Revisão completa',
         totalValue: 1200,
+        userEmail: 'mec2@gearbox.com',
+        prazoEstimadoDias: 10,
+        dataPrevistaOffsetDays: 7,
       },
       {
         clientKey: 'pedro.oliveira@email.com',
@@ -249,6 +265,9 @@ export default class extends BaseSeeder {
         status: 'Concluído',
         description: 'Alinhamento e balanceamento',
         totalValue: 280,
+        userEmail: 'mec3@gearbox.com',
+        prazoEstimadoDias: 4,
+        dataPrevistaOffsetDays: -1,
       },
       {
         clientKey: 'ana.costa@email.com',
@@ -256,6 +275,9 @@ export default class extends BaseSeeder {
         status: 'Em andamento',
         description: 'Troca de pastilhas de freio',
         totalValue: 680,
+        userEmail: 'mec2@gearbox.com',
+        prazoEstimadoDias: 6,
+        dataPrevistaOffsetDays: 4,
       },
       {
         clientKey: 'carlos.souza@email.com',
@@ -263,6 +285,9 @@ export default class extends BaseSeeder {
         status: 'Pendente',
         description: 'Troca de pneus',
         totalValue: 1800,
+        userEmail: 'mec1@gearbox.com',
+        prazoEstimadoDias: 8,
+        dataPrevistaOffsetDays: 5,
       },
       {
         clientKey: 'ana.costa@email.com',
@@ -270,6 +295,9 @@ export default class extends BaseSeeder {
         status: 'Cancelado',
         description: 'Instalação de acessórios',
         totalValue: 900,
+        userEmail: 'mec3@gearbox.com',
+        prazoEstimadoDias: 2,
+        dataPrevistaOffsetDays: -2,
       },
     ]
 
@@ -290,6 +318,16 @@ export default class extends BaseSeeder {
       const budgetReference =
         budgetsForCar.find((record) => record.status === 'aceito') ?? budgetsForCar[0] ?? null
 
+      const prazoEstimadoDias = service.prazoEstimadoDias ?? 0
+      const baseDate = new Date()
+      const dataPrevistaJs =
+        service.dataPrevistaOffsetDays !== undefined
+          ? new Date(baseDate.getTime() + service.dataPrevistaOffsetDays * 24 * 60 * 60 * 1000)
+          : prazoEstimadoDias > 0
+            ? new Date(baseDate.getTime() + prazoEstimadoDias * 24 * 60 * 60 * 1000)
+            : null
+      const dataPrevista = dataPrevistaJs ? DateTime.fromJSDate(dataPrevistaJs) : null
+
       await Service.updateOrCreate(
         {
           carId: car.id,
@@ -306,6 +344,8 @@ export default class extends BaseSeeder {
           updatedById: serviceUser.id,
           assignedToId: serviceUser.id,
           createdById: serviceUser.id,
+          prazoEstimadoDias: prazoEstimadoDias || null,
+          dataPrevista,
         }
       )
     }

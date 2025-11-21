@@ -9,6 +9,11 @@ export const createServiceValidator = vine.compile(
     status: vine.enum(STATUS_OPTIONS).optional(),
     description: vine.string().trim().minLength(3).optional(),
     totalValue: vine.number().min(0).optional(),
+    prazoEstimadoDias: vine.number().min(0).optional(),
+    dataPrevista: vine
+      .string()
+      .optional()
+      .transform((value) => (value && value.trim() ? value.trim() : undefined)),
   })
 )
 
@@ -19,6 +24,8 @@ export const updateServiceValidator = vine.compile(
     status: vine.enum(STATUS_OPTIONS).optional(),
     description: vine.string().trim().minLength(3).optional(),
     totalValue: vine.number().min(0).optional(),
+    prazoEstimadoDias: vine.number().min(0).optional(),
+    dataPrevista: vine.string().optional(),
   })
 )
 

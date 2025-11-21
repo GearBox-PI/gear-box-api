@@ -10,6 +10,7 @@ import {
   acceptBudgetValidator,
 } from '#validators/budgets_validator'
 import db from '@adonisjs/lucid/services/db'
+import { DateTime } from 'luxon'
 
 const BUDGET_NOT_FOUND = { error: 'Orçamento não encontrado' }
 const CREATE_FORBIDDEN = { error: 'Apenas mecânicos ou administradores podem criar orçamentos' }
@@ -84,6 +85,7 @@ export default class BudgetsController {
       amount: String(payload.amount),
       status: payload.status ?? 'aberto',
       updatedById: auth.user.id,
+      prazoEstimadoDias: payload.prazoEstimadoDias ?? null,
     })
 
     return response.created(budget)
@@ -185,6 +187,14 @@ export default class BudgetsController {
       budget.updatedById = auth.user?.id ?? null
       await budget.save()
 
+      const prazoEstimadoDias = budget.prazoEstimadoDias ?? null
+      const approvalDate = new Date()
+      const dataPrevistaJs =
+        prazoEstimadoDias && prazoEstimadoDias > 0
+          ? new Date(approvalDate.getTime() + prazoEstimadoDias * 24 * 60 * 60 * 1000)
+          : null
+      const dataPrevista = dataPrevistaJs ? DateTime.fromJSDate(dataPrevistaJs) : null
+
       const service = await Service.create(
         {
           clientId: budget.clientId,
@@ -197,6 +207,8 @@ export default class BudgetsController {
           updatedById: auth.user.id,
           assignedToId: assignedUser.id,
           createdById: auth.user.id,
+          prazoEstimadoDias,
+          dataPrevista,
         },
         { client: trx }
       )

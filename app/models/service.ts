@@ -42,6 +42,12 @@ export default class Service extends BaseModel {
   @column({ columnName: 'updated_by' })
   declare updatedById?: string | null
 
+  @column({ columnName: 'prazo_estimado_dias' })
+  declare prazoEstimadoDias?: number | null
+
+  @column.dateTime({ columnName: 'data_prevista' })
+  declare dataPrevista?: DateTime | null
+
   @column({ columnName: 'assigned_to' })
   declare assignedToId?: string | null
 

@@ -3,6 +3,7 @@ import Service from '#models/service'
 import Client from '#models/client'
 import Car from '#models/car'
 import { createServiceValidator, updateServiceValidator } from '#validators/services_validator'
+import { DateTime } from 'luxon'
 
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
@@ -17,6 +18,24 @@ const EDIT_FORBIDDEN = {
 const UPDATE_FORBIDDEN = {
   error:
     'A atualização não pode ser realizada. Este orçamento/serviço não foi criado por você. Apenas o responsável ou o dono têm permissão para modificar este item.',
+}
+
+const parseToDateTime = (value: unknown) => {
+  if (!value) return null
+  if (value instanceof DateTime) {
+    return value.isValid ? value : null
+  }
+  if (value instanceof Date) {
+    const dt = DateTime.fromJSDate(value)
+    return dt.isValid ? dt : null
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    const dt = DateTime.fromISO(trimmed)
+    return dt.isValid ? dt : null
+  }
+  return null
 }
 
 export default class ServicesController {
@@ -94,6 +113,8 @@ export default class ServicesController {
       updatedById: auth.user?.id ?? null,
       assignedToId: auth.user?.id ?? null,
       createdById: auth.user?.id ?? null,
+      prazoEstimadoDias: payload.prazoEstimadoDias ?? null,
+      dataPrevista: parseToDateTime(payload.dataPrevista),
     })
 
     return response.created(service)
@@ -141,7 +162,10 @@ export default class ServicesController {
       ;(data as any).totalValue = String(data.totalValue)
     }
 
-    service.merge(data as any)
+    const mappedData = { ...data } as any
+    mappedData.dataPrevista = parseToDateTime(data.dataPrevista)
+
+    service.merge(mappedData)
     service.updatedById = auth.user?.id ?? null
     await service.save()
     return service
