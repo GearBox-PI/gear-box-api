@@ -669,7 +669,7 @@ components:
         updatedById: { type: string, format: uuid, nullable: true }
         description: { type: string }
         amount: { type: string }
-        status: { type: string, enum: ['aberto', 'aceito', 'recusado', 'cancelado'] }
+        status: { type: string, enum: ['aberto', 'aceito', 'recusado', 'cancelar'] }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
       required: [id, clientId, carId, description, amount, status, createdAt, updatedAt]
@@ -678,7 +678,11 @@ components:
       type: object
       properties:
         assignedToId: { type: string, format: uuid }
-      required: [assignedToId]
+        confirm:
+          type: boolean
+          description: Confirme que deseja gerar o serviço a partir do orçamento.
+          example: true
+      required: [assignedToId, confirm]
 
     BudgetAcceptResponse:
       type: object

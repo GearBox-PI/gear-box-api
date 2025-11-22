@@ -46,6 +46,7 @@ type UpdateBudgetInput = {
 type AcceptBudgetInput = {
   id: string
   assignedToId: string
+  confirm?: boolean
   authUser: AuthUser
 }
 
@@ -57,20 +58,36 @@ const forbidden: ServiceError = { status: 'forbidden' }
 
 export default class BudgetsService {
   async list({ page, perPage, authUser }: PaginateInput) {
-    const query = Budget.query().preload('user').preload('updatedBy').orderBy('created_at', 'desc')
+    const query = Budget.query()
+      .preload('user')
+      .preload('updatedBy')
+      .preload('createdBy')
+      .orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
-      query.where('user_id', authUser.id)
+      query.where((builder) => {
+        builder.where('user_id', authUser.id).orWhere('created_by', authUser.id)
+      })
     }
 
     return query.paginate(page, perPage)
   }
 
   async get({ id, authUser }: BudgetOperationInput): Promise<ServiceResult<Budget>> {
-    const budget = await Budget.query().where('id', id).preload('user').preload('updatedBy').first()
+    const budget = await Budget.query()
+      .where('id', id)
+      .preload('user')
+      .preload('updatedBy')
+      .preload('createdBy')
+      .first()
 
     if (!budget) return notFound
-    if (authUser?.tipo === MECHANIC_ROLE && budget.userId !== authUser.id) return forbidden
+    if (
+      authUser?.tipo === MECHANIC_ROLE &&
+      budget.userId !== authUser.id &&
+      budget.createdById !== authUser.id
+    )
+      return forbidden
 
     return { status: 'ok', data: budget }
   }
@@ -85,7 +102,8 @@ export default class BudgetsService {
     const budget = await Budget.create({
       clientId: payload.clientId,
       carId: payload.carId,
-      userId: authUser.id,
+      userId: payload.status === 'aceito' ? payload.assignedToId ?? authUser.id : authUser.id,
+      createdById: authUser.id,
       description: payload.description,
       amount: String(payload.amount),
       status: payload.status ?? 'aberto',
@@ -105,7 +123,8 @@ export default class BudgetsService {
 
     const budget = await Budget.find(id)
     if (!budget) return notFound
-    if (isMechanic && budget.userId !== authUser?.id) return forbidden
+    if (isMechanic && budget.userId !== authUser?.id && budget.createdById !== authUser?.id)
+      return forbidden
 
     if (!isOwner) {
       delete (data as any).status
@@ -140,12 +159,25 @@ export default class BudgetsService {
   async accept(
     input: AcceptBudgetInput
   ): Promise<ServiceResult<{ budget: Budget; service: Service }>> {
-    const { id, assignedToId, authUser } = input
+    const { id, assignedToId, confirm, authUser } = input
+    if (!confirm) {
+      return {
+        status: 'validation',
+        errors: [
+          {
+            field: 'confirm',
+            message: 'Confirme a conversão do orçamento em serviço.',
+          },
+        ],
+      }
+    }
     const budget = await Budget.find(id)
     if (!budget) return notFound
 
     const isOwner = authUser?.tipo === ADMIN_ROLE
-    const isBudgetMechanic = authUser?.tipo === MECHANIC_ROLE && budget.userId === authUser?.id
+    const isBudgetMechanic =
+      authUser?.tipo === MECHANIC_ROLE &&
+      (budget.userId === authUser?.id || budget.createdById === authUser?.id)
     if (!isOwner && !isBudgetMechanic) return forbidden
 
     if (budget.status !== 'aberto') {
@@ -219,7 +251,9 @@ export default class BudgetsService {
     if (!budget) return notFound
 
     const isOwner = authUser?.tipo === ADMIN_ROLE
-    const isBudgetMechanic = authUser?.tipo === MECHANIC_ROLE && budget.userId === authUser?.id
+    const isBudgetMechanic =
+      authUser?.tipo === MECHANIC_ROLE &&
+      (budget.userId === authUser?.id || budget.createdById === authUser?.id)
 
     if (!isOwner && !isBudgetMechanic) return forbidden
 

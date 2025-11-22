@@ -92,6 +92,7 @@ export default class BudgetsController {
     const result = await this.budgetsService.accept({
       id: params.id,
       assignedToId: payload.assignedToId,
+      confirm: payload.confirm,
       authUser: auth.user,
     })
 

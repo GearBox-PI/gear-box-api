@@ -29,6 +29,9 @@ export default class Budget extends BaseModel {
   @column({ columnName: 'updated_by' })
   declare updatedById: string | null
 
+  @column({ columnName: 'created_by' })
+  declare createdById: string | null
+
   @column()
   declare description: string
 
@@ -58,4 +61,7 @@ export default class Budget extends BaseModel {
 
   @belongsTo(() => User, { foreignKey: 'updatedById' })
   declare updatedBy: relations.BelongsTo<typeof User>
+
+  @belongsTo(() => User, { foreignKey: 'createdById' })
+  declare createdBy: relations.BelongsTo<typeof User>
 }

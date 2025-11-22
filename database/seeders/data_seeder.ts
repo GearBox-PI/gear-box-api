@@ -102,42 +102,42 @@ export default class extends BaseSeeder {
     const carsData: CarSeed[] = [
       {
         clientKey: 'joao.silva@email.com',
-        placa: 'ABC1D23',
+        placa: 'ZXA1B23',
         marca: 'Honda',
         modelo: 'Civic',
         ano: 2020,
       },
       {
         clientKey: 'maria.santos@email.com',
-        placa: 'DEF4G56',
+        placa: 'ZXB4C56',
         marca: 'Toyota',
         modelo: 'Corolla',
         ano: 2019,
       },
       {
         clientKey: 'pedro.oliveira@email.com',
-        placa: 'GHI7J89',
+        placa: 'ZXC7D89',
         marca: 'Ford',
         modelo: 'Ka',
         ano: 2021,
       },
       {
         clientKey: 'ana.costa@email.com',
-        placa: 'JKL0M12',
+        placa: 'ZXD0E12',
         marca: 'Volkswagen',
         modelo: 'Gol',
         ano: 2018,
       },
       {
         clientKey: 'carlos.souza@email.com',
-        placa: 'MNO3P45',
+        placa: 'ZXE3F45',
         marca: 'Fiat',
         modelo: 'Uno',
         ano: 2017,
       },
       {
         clientKey: 'ana.costa@email.com',
-        placa: 'PQR6S78',
+        placa: 'ZXF6G78',
         marca: 'Chevrolet',
         modelo: 'Onix',
         ano: 2022,
@@ -166,7 +166,7 @@ export default class extends BaseSeeder {
     const budgetsData: BudgetSeed[] = [
       {
         clientKey: 'joao.silva@email.com',
-        placa: 'ABC1D23',
+        placa: 'ZXA1B23',
         userEmail: 'mec1@gearbox.com',
         status: 'aberto',
         description: 'Diagnóstico completo do motor',
@@ -175,7 +175,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'maria.santos@email.com',
-        placa: 'DEF4G56',
+        placa: 'ZXB4C56',
         userEmail: 'mec2@gearbox.com',
         status: 'aceito',
         description: 'Reparo no sistema de suspensão',
@@ -184,7 +184,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'pedro.oliveira@email.com',
-        placa: 'GHI7J89',
+        placa: 'ZXC7D89',
         userEmail: 'mec3@gearbox.com',
         status: 'recusado',
         description: 'Troca do sistema de escapamento',
@@ -193,7 +193,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'ana.costa@email.com',
-        placa: 'JKL0M12',
+        placa: 'ZXD0E12',
         userEmail: 'mec2@gearbox.com',
         status: 'cancelado',
         description: 'Instalação de central multimídia',
@@ -202,7 +202,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'carlos.souza@email.com',
-        placa: 'MNO3P45',
+        placa: 'ZXE3F45',
         userEmail: 'mec1@gearbox.com',
         status: 'aberto',
         description: 'Revisão elétrica completa',
@@ -230,6 +230,7 @@ export default class extends BaseSeeder {
           clientId: client.id,
           carId: car.id,
           userId: user.id,
+          createdById: user.id,
           description: budget.description,
           status: budget.status,
           amount: budget.amount.toFixed(2),
@@ -244,7 +245,7 @@ export default class extends BaseSeeder {
     const servicesData: ServiceSeed[] = [
       {
         clientKey: 'joao.silva@email.com',
-        placa: 'ABC1D23',
+        placa: 'ZXA1B23',
         status: 'Em andamento',
         description: 'Troca de óleo e filtros',
         totalValue: 450,
@@ -254,7 +255,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'maria.santos@email.com',
-        placa: 'DEF4G56',
+        placa: 'ZXB4C56',
         status: 'Pendente',
         description: 'Revisão completa',
         totalValue: 1200,
@@ -264,7 +265,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'pedro.oliveira@email.com',
-        placa: 'GHI7J89',
+        placa: 'ZXC7D89',
         status: 'Concluído',
         description: 'Alinhamento e balanceamento',
         totalValue: 280,
@@ -274,7 +275,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'ana.costa@email.com',
-        placa: 'JKL0M12',
+        placa: 'ZXD0E12',
         status: 'Em andamento',
         description: 'Troca de pastilhas de freio',
         totalValue: 680,
@@ -284,7 +285,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'carlos.souza@email.com',
-        placa: 'MNO3P45',
+        placa: 'ZXE3F45',
         status: 'Pendente',
         description: 'Troca de pneus',
         totalValue: 1800,
@@ -294,7 +295,7 @@ export default class extends BaseSeeder {
       },
       {
         clientKey: 'ana.costa@email.com',
-        placa: 'PQR6S78',
+        placa: 'ZXF6G78',
         status: 'Cancelado',
         description: 'Instalação de acessórios',
         totalValue: 900,
@@ -324,6 +325,7 @@ export default class extends BaseSeeder {
           clientId: client.id,
           carId: car.id,
           userId: serviceUser.id,
+          createdById: serviceUser.id,
           description: `Orçamento gerado para serviço: ${service.description}`,
           status: 'aceito',
           amount: service.totalValue.toFixed(2),
