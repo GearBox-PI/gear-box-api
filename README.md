@@ -108,7 +108,7 @@ curl -sS -X POST http://localhost:3333/login \
 
 ## Deploy / Produção
 
-1. Ajuste o `.env` com credenciais reais (APP_KEY, DB_*, PORT/HOST). Gere a chave se ainda não existir:
+1. Ajuste o `.env` com credenciais reais (APP*KEY, DB*\*, PORT/HOST). Gere a chave se ainda não existir:
 
    ```bash
    node ace generate:key

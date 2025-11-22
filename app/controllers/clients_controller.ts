@@ -44,8 +44,7 @@ export default class ClientsController {
 
   // Atualizar cliente (apenas dono)
   async update({ auth, params, request, response }: HttpContext) {
-    if (!auth.user)
-      return response.unauthorized({ error: 'Autenticação necessária' })
+    if (!auth.user) return response.unauthorized({ error: 'Autenticação necessária' })
 
     const { id } = params
     const client = await Client.find(id)

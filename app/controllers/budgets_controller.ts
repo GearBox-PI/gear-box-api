@@ -1,16 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Budget from '#models/budget'
-import Client from '#models/client'
-import Car from '#models/car'
-import Service from '#models/service'
-import User from '#models/user'
 import {
   createBudgetValidator,
   updateBudgetValidator,
   acceptBudgetValidator,
 } from '#validators/budgets_validator'
-import db from '@adonisjs/lucid/services/db'
-import { DateTime } from 'luxon'
+import BudgetsService from '#services/budgets_service'
+import { inject } from '@adonisjs/core'
 
 const BUDGET_NOT_FOUND = { error: 'Orçamento não encontrado' }
 const CREATE_FORBIDDEN = { error: 'Apenas mecânicos ou administradores podem criar orçamentos' }
@@ -27,219 +22,95 @@ const UPDATE_FORBIDDEN = {
     'A atualização não pode ser realizada. Este orçamento/serviço não foi criado por você. Apenas o responsável ou o dono têm permissão para modificar este item.',
 }
 const ACCEPT_FORBIDDEN = {
-  error: 'Você não tem permissão para atualizar o status deste orçamento. Somente o dono pode aceitar ou recusar.',
+  error:
+    'Você não tem permissão para atualizar o status deste orçamento. Somente o dono pode aceitar ou recusar.',
 }
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 
+@inject()
 export default class BudgetsController {
+  constructor(private budgetsService: BudgetsService) {}
+
   async index({ request, auth }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
 
-    const query = Budget.query()
-      .preload('user')
-      .preload('updatedBy')
-      .orderBy('created_at', 'desc')
-    if (auth.user?.tipo === MECHANIC_ROLE) {
-      query.where('user_id', auth.user.id)
-    }
-    return query.paginate(page, perPage)
+    return this.budgetsService.list({ page, perPage, authUser: auth.user })
   }
 
   async show({ params, response, auth }: HttpContext) {
-    const budget = await Budget.query()
-      .where('id', params.id)
-      .preload('user')
-      .preload('updatedBy')
-      .first()
-    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
-    if (auth.user?.tipo === MECHANIC_ROLE && budget.userId !== auth.user.id)
-      return response.forbidden(VIEW_FORBIDDEN)
-    return budget
+    const result = await this.budgetsService.get({ id: params.id, authUser: auth.user })
+    if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
+    if (result.status === 'forbidden') return response.forbidden(VIEW_FORBIDDEN)
+    return result.data
   }
 
   async store({ auth, request, response }: HttpContext) {
-    if (!auth.user || ![MECHANIC_ROLE, ADMIN_ROLE].includes(auth.user.tipo))
-      return response.forbidden(CREATE_FORBIDDEN)
-
     const payload = await createBudgetValidator.validate(request.all())
 
-    const client = await Client.find(payload.clientId)
-    if (!client)
-      return response.unprocessableEntity({
-        errors: [{ field: 'clientId', message: 'Cliente inexistente' }],
-      })
+    const result = await this.budgetsService.create({ ...payload, authUser: auth.user })
 
-    const car = await Car.find(payload.carId)
-    if (!car)
-      return response.unprocessableEntity({
-        errors: [{ field: 'carId', message: 'Carro inexistente' }],
-      })
+    if (result.status === 'forbidden') return response.forbidden(CREATE_FORBIDDEN)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
 
-    const budget = await Budget.create({
-      clientId: payload.clientId,
-      carId: payload.carId,
-      userId: auth.user.id,
-      description: payload.description,
-      amount: String(payload.amount),
-      status: payload.status ?? 'aberto',
-      updatedById: auth.user.id,
-      prazoEstimadoDias: payload.prazoEstimadoDias ?? null,
-    })
-
-    return response.created(budget)
+    return response.created(result.data)
   }
 
-
   async update({ auth, params, request, response }: HttpContext) {
-    const isOwner = auth.user?.tipo === ADMIN_ROLE
-    const isMechanic = auth.user?.tipo === MECHANIC_ROLE
-    // Verifica se o usuário possui o papel necessário
-    if (!isOwner && !isMechanic) return response.forbidden(UPDATE_FORBIDDEN)
-
-    const budget = await Budget.find(params.id)
-    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
-
-    // Garante que o mecânico só mexa em orçamentos pelos quais é responsável
-    if (isMechanic && budget.userId !== auth.user?.id) return response.forbidden(EDIT_FORBIDDEN)
-
     const data = await updateBudgetValidator.validate(request.all())
-    // Impede que mecânicos alterem o status do orçamento
-    if (!isOwner) {
-      delete (data as any).status
-    }
 
-    if (data.clientId) {
-      const client = await Client.find(data.clientId)
-      if (!client)
-        return response.unprocessableEntity({
-          errors: [{ field: 'clientId', message: 'Cliente inexistente' }],
-        })
-    }
+    const result = await this.budgetsService.update({
+      id: params.id,
+      data,
+      authUser: auth.user,
+    })
 
-    if (data.carId) {
-      const car = await Car.find(data.carId)
-      if (!car)
-        return response.unprocessableEntity({
-          errors: [{ field: 'carId', message: 'Carro inexistente' }],
-        })
-    }
+    if (result.status === 'forbidden')
+      return response.forbidden(
+        auth.user?.tipo === MECHANIC_ROLE ? EDIT_FORBIDDEN : UPDATE_FORBIDDEN
+      )
+    if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
 
-    if (typeof data.amount === 'number') {
-      ;(data as any).amount = String(data.amount)
-    }
-
-    budget.merge(data as any)
-    budget.updatedById = auth.user?.id ?? null
-    await budget.save()
-    return budget
+    return result.data
   }
 
   async destroy({ auth, params, response }: HttpContext) {
-    if (auth.user?.tipo !== ADMIN_ROLE)
+    const result = await this.budgetsService.delete({ id: params.id, authUser: auth.user })
+    if (result.status === 'forbidden')
       return response.forbidden({ error: 'Apenas administradores podem remover' })
-
-    const budget = await Budget.find(params.id)
-    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
-
-    await budget.delete()
+    if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
     return response.noContent()
   }
 
   async accept({ auth, params, request, response }: HttpContext) {
-    const budget = await Budget.find(params.id)
-    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
-
-    const isOwner = auth.user?.tipo === ADMIN_ROLE
-    const isBudgetMechanic =
-      auth.user?.tipo === MECHANIC_ROLE && budget.userId === auth.user?.id
-
-    if (!isOwner && !isBudgetMechanic) return response.forbidden(ACCEPT_FORBIDDEN)
-
-    if (budget.status !== 'aberto')
-      return response.unprocessableEntity({
-        errors: [{ field: 'status', message: 'Apenas orçamentos abertos podem ser aceitos' }],
-      })
-
     const payload = await acceptBudgetValidator.validate(request.all())
 
-    const assignedUser = await User.query()
-      .where('id', payload.assignedToId)
-      .where('ativo', true)
-      .whereIn('tipo', [MECHANIC_ROLE, ADMIN_ROLE])
-      .first()
+    const result = await this.budgetsService.accept({
+      id: params.id,
+      assignedToId: payload.assignedToId,
+      authUser: auth.user,
+    })
 
-    if (!assignedUser)
-      return response.unprocessableEntity({
-        errors: [
-          {
-            field: 'assignedToId',
-            message: 'Escolha um usuário ativo com papel de mecânico ou dono.',
-          },
-        ],
-      })
+    if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
+    if (result.status === 'forbidden') return response.forbidden(ACCEPT_FORBIDDEN)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
 
-    const trx = await db.transaction()
-    try {
-      budget.useTransaction(trx)
-      budget.status = 'aceito'
-      budget.updatedById = auth.user?.id ?? null
-      await budget.save()
-
-      const prazoEstimadoDias = budget.prazoEstimadoDias ?? null
-      const approvalDate = new Date()
-      const dataPrevistaJs =
-        prazoEstimadoDias && prazoEstimadoDias > 0
-          ? new Date(approvalDate.getTime() + prazoEstimadoDias * 24 * 60 * 60 * 1000)
-          : null
-      const dataPrevista = dataPrevistaJs ? DateTime.fromJSDate(dataPrevistaJs) : null
-
-      const service = await Service.create(
-        {
-          clientId: budget.clientId,
-          carId: budget.carId,
-          status: 'Pendente',
-          description: budget.description,
-          totalValue: budget.amount,
-          userId: assignedUser.id,
-          budgetId: budget.id,
-          updatedById: auth.user.id,
-          assignedToId: assignedUser.id,
-          createdById: auth.user.id,
-          prazoEstimadoDias,
-          dataPrevista,
-        },
-        { client: trx }
-      )
-
-      await trx.commit()
-
-      return { budget, service }
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+    return result.data
   }
 
   async reject({ auth, params, response }: HttpContext) {
-    const budget = await Budget.find(params.id)
-    if (!budget) return response.notFound(BUDGET_NOT_FOUND)
+    const result = await this.budgetsService.reject({ id: params.id, authUser: auth.user })
 
-    const isOwner = auth.user?.tipo === ADMIN_ROLE
-    const isBudgetMechanic =
-      auth.user?.tipo === MECHANIC_ROLE && budget.userId === auth.user?.id
+    if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
+    if (result.status === 'forbidden') return response.forbidden(ACCEPT_FORBIDDEN)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
 
-    if (!isOwner && !isBudgetMechanic) return response.forbidden(ACCEPT_FORBIDDEN)
-
-    if (budget.status !== 'aberto')
-      return response.unprocessableEntity({
-        errors: [{ field: 'status', message: 'Apenas orçamentos abertos podem ser recusados' }],
-      })
-
-    budget.status = 'recusado'
-    budget.updatedById = auth.user?.id ?? null
-    await budget.save()
-    return budget
+    return result.data
   }
 }

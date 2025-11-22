@@ -46,7 +46,10 @@ export default class extends BaseSeeder {
     const users = await User.all()
     const usersMap = new Map(users.map((user) => [user.email, user]))
     const defaultMechanic =
-      users.find((user) => user.tipo === 'mecanico') ?? users.find((user) => user.tipo === 'dono') ?? users[0] ?? null
+      users.find((user) => user.tipo === 'mecanico') ??
+      users.find((user) => user.tipo === 'dono') ??
+      users[0] ??
+      null
 
     const clientsData: ClientSeed[] = [
       {
@@ -308,15 +311,27 @@ export default class extends BaseSeeder {
       if (!client || !car) continue
 
       const serviceUser =
-        (service.userEmail && usersMap.get(service.userEmail)) ||
-        defaultMechanic ||
-        users[0]
+        (service.userEmail && usersMap.get(service.userEmail)) || defaultMechanic || users[0]
 
       if (!serviceUser) continue
 
       const budgetsForCar = budgetMap.get(car.id) ?? []
-      const budgetReference =
+      let budgetReference =
         budgetsForCar.find((record) => record.status === 'aceito') ?? budgetsForCar[0] ?? null
+
+      if (!budgetReference) {
+        budgetReference = await Budget.create({
+          clientId: client.id,
+          carId: car.id,
+          userId: serviceUser.id,
+          description: `Orçamento gerado para serviço: ${service.description}`,
+          status: 'aceito',
+          amount: service.totalValue.toFixed(2),
+          updatedById: serviceUser.id,
+          prazoEstimadoDias: service.prazoEstimadoDias ?? null,
+        })
+        budgetMap.set(car.id, [...budgetsForCar, budgetReference])
+      }
 
       const prazoEstimadoDias = service.prazoEstimadoDias ?? 0
       const baseDate = new Date()
@@ -349,6 +364,5 @@ export default class extends BaseSeeder {
         }
       )
     }
-
   }
 }

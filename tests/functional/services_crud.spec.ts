@@ -49,7 +49,13 @@ test.group('Services CRUD', (group) => {
     const createService = await client
       .post('/services')
       .header('Authorization', `Bearer ${mechToken}`)
-      .json({ clientId, carId, status: 'Em andamento', description: 'Troca de óleo', totalValue: 150.5 })
+      .json({
+        clientId,
+        carId,
+        status: 'Em andamento',
+        description: 'Troca de óleo',
+        totalValue: 150.5,
+      })
     createService.assertStatus(201)
     const serviceId = createService.body().id
 

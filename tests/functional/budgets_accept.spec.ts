@@ -13,16 +13,13 @@ async function createClientAndCar(client: any, token: string) {
     .header('Authorization', `Bearer ${token}`)
     .json({ nome: 'Cliente Aceite', telefone: '11999990000' })
   clientRes.assertStatus(201)
-  const carRes = await client
-    .post('/cars')
-    .header('Authorization', `Bearer ${token}`)
-    .json({
-      clientId: clientRes.body().id,
-      placa: 'ACM1A23',
-      marca: 'Honda',
-      modelo: 'Civic',
-      ano: 2020,
-    })
+  const carRes = await client.post('/cars').header('Authorization', `Bearer ${token}`).json({
+    clientId: clientRes.body().id,
+    placa: 'ACM1A23',
+    marca: 'Honda',
+    modelo: 'Civic',
+    ano: 2020,
+  })
   carRes.assertStatus(201)
   return { clientId: clientRes.body().id, carId: carRes.body().id }
 }

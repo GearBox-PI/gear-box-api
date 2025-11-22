@@ -1,5 +1,13 @@
 import { DateTime } from 'luxon'
-import { BaseModel, beforeCreate, belongsTo, column, hasMany, afterFetch, afterFind } from '@adonisjs/lucid/orm'
+import {
+  BaseModel,
+  beforeCreate,
+  belongsTo,
+  column,
+  hasMany,
+  afterFetch,
+  afterFind,
+} from '@adonisjs/lucid/orm'
 import { randomUUID } from 'node:crypto'
 import * as relations from '@adonisjs/lucid/types/relations'
 import Service from './service.js'
