@@ -30,4 +30,15 @@ export default await Env.create(new URL('../', import.meta.url), {
   DB_DATABASE: Env.schema.string(),
   // Banco de testes (opcional). Se definido e NODE_ENV=test, será utilizado no lugar de DB_DATABASE
   DB_DATABASE_TEST: Env.schema.string.optional(),
+
+  /*
+  |--------------------------------------------------------------------------
+  | Mail
+  |--------------------------------------------------------------------------
+  */
+  MAIL_HOST: Env.schema.string({ format: 'host' }),
+  MAIL_PORT: Env.schema.number(),
+  MAIL_USERNAME: Env.schema.string.optional(),
+  MAIL_PASSWORD: Env.schema.string.optional(),
+  MAIL_FROM: Env.schema.string.optional(),
 })

@@ -1,7 +1,10 @@
 import Budget from '#models/budget'
+import Client from '#models/client'
 import Service from '#models/service'
 import User from '#models/user'
+import MailService, { type EmailDispatchResult } from '#services/mail_service'
 import db from '@adonisjs/lucid/services/db'
+import logger from '@adonisjs/core/services/logger'
 import { DateTime } from 'luxon'
 import { validateClientAndCar } from '#services/relationship_guard'
 
@@ -15,6 +18,12 @@ type ServiceError =
   | { status: 'validation'; errors: ValidationError[] }
 
 type ServiceResult<T> = { status: 'ok'; data: T } | ServiceError
+
+type AcceptBudgetResult = {
+  budget: Budget
+  service: Service
+  emailNotification?: EmailDispatchResult
+}
 
 type PaginateInput = { page: number; perPage: number; authUser: AuthUser }
 
@@ -156,9 +165,7 @@ export default class BudgetsService {
     return { status: 'ok', data: undefined }
   }
 
-  async accept(
-    input: AcceptBudgetInput
-  ): Promise<ServiceResult<{ budget: Budget; service: Service }>> {
+  async accept(input: AcceptBudgetInput): Promise<ServiceResult<AcceptBudgetResult>> {
     const { id, assignedToId, confirm, authUser } = input
     if (!confirm) {
       return {
@@ -239,7 +246,21 @@ export default class BudgetsService {
       )
 
       await trx.commit()
-      return { status: 'ok', data: { budget, service } }
+
+      let emailNotification: EmailDispatchResult | undefined
+
+      const customer = await Client.find(budget.clientId)
+      if (!customer) {
+        emailNotification = {
+          status: 'skipped',
+          message: 'Cliente não encontrado para envio de e-mail.',
+        }
+        logger.warn({ budgetId: budget.id }, emailNotification.message)
+      } else {
+        emailNotification = await MailService.sendServiceCreatedEmail(customer, budget, service)
+      }
+
+      return { status: 'ok', data: { budget, service, emailNotification } }
     } catch (error) {
       await trx.rollback()
       throw error
