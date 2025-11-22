@@ -17,6 +17,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   APP_KEY: Env.schema.string(),
   HOST: Env.schema.string({ format: 'host' }),
   LOG_LEVEL: Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
+  APP_NAME: Env.schema.string.optional(),
+  CORS_ALLOWED_ORIGINS: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
@@ -30,6 +32,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   DB_DATABASE: Env.schema.string(),
   // Banco de testes (opcional). Se definido e NODE_ENV=test, será utilizado no lugar de DB_DATABASE
   DB_DATABASE_TEST: Env.schema.string.optional(),
+  DB_SSL: Env.schema.boolean.optional(),
+  DB_SSL_REJECT_UNAUTHORIZED: Env.schema.boolean.optional(),
 
   /*
   |--------------------------------------------------------------------------
@@ -41,4 +45,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   MAIL_USERNAME: Env.schema.string.optional(),
   MAIL_PASSWORD: Env.schema.string.optional(),
   MAIL_FROM: Env.schema.string.optional(),
+  MAIL_SECURE: Env.schema.boolean.optional(),
+  MAIL_IGNORE_TLS: Env.schema.boolean.optional(),
 })

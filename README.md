@@ -52,19 +52,33 @@ Observações:
 
 ```env
 TZ=UTC
+APP_NAME=Gear Box API
 PORT=3333
-HOST=localhost
+HOST=0.0.0.0
 LOG_LEVEL=info
 APP_KEY= # será preenchida pelo "node ace generate:key"
 NODE_ENV=development
+CORS_ALLOWED_ORIGINS=http://localhost:5173
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=gearbox
 DB_PASSWORD=gearbox
 DB_DATABASE=gearbox_dev
+DB_SSL=false
+DB_SSL_REJECT_UNAUTHORIZED=false
 # Opcional para testes automatizados (usa quando NODE_ENV=test)
 # DB_DATABASE_TEST=gearbox_test
+
+MAIL_HOST=smtp.example.com
+MAIL_PORT=2525
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM="Gear Box <no-reply@gearbox.com>"
+MAIL_SECURE=false
+MAIL_IGNORE_TLS=false
 ```
+
+> Em bancos gerenciados (como Azure Database for PostgreSQL), defina `DB_SSL=true`. Caso o servidor use certificados internos, ajuste `DB_SSL_REJECT_UNAUTHORIZED=false` até instalar o certificado confiável.
 
 ## Documentação da API
 
@@ -130,7 +144,7 @@ curl -sS -X POST http://localhost:3333/login \
 4. Inicie a API a partir do bundle compilado (ideal para sistemas init ou containers):
 
    ```bash
-   node build/server.js
+   npm start
    ```
 
    > Dica: em imagens Docker de produção, use multi-stage build para copiar apenas `build/` e o `.env` configurado, garantindo pacotes enxutos.

@@ -12,10 +12,21 @@ import { middleware } from '#start/kernel'
 import app from '@adonisjs/core/services/app'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { basename, join, normalize } from 'node:path'
+
+const viewsRoot = app.makePath('views')
+
+function makeSafeViewPath(...segments: string[]) {
+  const resolvedPath = normalize(join(viewsRoot, ...segments))
+  if (!resolvedPath.startsWith(viewsRoot)) {
+    return null
+  }
+  return resolvedPath
+}
 
 router.get('/', async ({ response }) => {
-  const filePath = app.makePath('views', 'index.html')
-  if (existsSync(filePath)) {
+  const filePath = makeSafeViewPath('index.html')
+  if (filePath && existsSync(filePath)) {
     response.header('Content-Type', 'text/html; charset=utf-8')
     return response.send(await readFile(filePath, 'utf-8'))
   }
@@ -147,8 +158,8 @@ router.get('/docs/openapi.yml', async ({ response }) => {
 })
 
 router.get('/docs', async ({ response }) => {
-  const filePath = app.makePath('views', 'docs.html')
-  if (existsSync(filePath)) {
+  const filePath = makeSafeViewPath('docs.html')
+  if (filePath && existsSync(filePath)) {
     response.header('Content-Type', 'text/html; charset=utf-8')
     return response.send(await readFile(filePath, 'utf-8'))
   }
@@ -181,8 +192,8 @@ router.get('/docs', async ({ response }) => {
 
 // Nova rota: Guia de uso da API
 router.get('/guide', async ({ response }) => {
-  const filePath = app.makePath('views', 'guide.html')
-  if (existsSync(filePath)) {
+  const filePath = makeSafeViewPath('guide.html')
+  if (filePath && existsSync(filePath)) {
     response.header('Content-Type', 'text/html; charset=utf-8')
     return response.send(await readFile(filePath, 'utf-8'))
   }
@@ -191,15 +202,17 @@ router.get('/guide', async ({ response }) => {
 
 // Assets estáticos da pasta views
 router.get('/views/styles/:file', async ({ params, response }) => {
-  const filePath = app.makePath('views', 'styles', params.file)
-  if (!existsSync(filePath)) return response.status(404).send('Not Found')
+  const fileName = basename(params.file)
+  const filePath = fileName ? makeSafeViewPath('styles', fileName) : null
+  if (!filePath || !existsSync(filePath)) return response.status(404).send('Not Found')
   response.header('Content-Type', 'text/css; charset=utf-8')
   return response.download(filePath)
 })
 
 router.get('/views/js/:file', async ({ params, response }) => {
-  const filePath = app.makePath('views', 'js', params.file)
-  if (!existsSync(filePath)) return response.status(404).send('Not Found')
+  const fileName = basename(params.file)
+  const filePath = fileName ? makeSafeViewPath('js', fileName) : null
+  if (!filePath || !existsSync(filePath)) return response.status(404).send('Not Found')
   response.header('Content-Type', 'application/javascript; charset=utf-8')
   return response.download(filePath)
 })
