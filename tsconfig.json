@@ -2,6 +2,26 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build"
-  }
+    "outDir": "./build",
+    "sourceMap": false
+  },
+  "include": [
+    "adonisrc.ts",
+    "app/**/*.ts",
+    "bin/console.ts",
+    "bin/server.ts",
+    "server.ts",
+    "config/**/*.ts",
+    "start/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "tests/**",
+    "database/**",
+    "database/migrations/**",
+    "database/seeders/**",
+    "resources/js/**",
+    "**/*.map"
+  ]
 }

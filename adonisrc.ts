@@ -9,6 +9,64 @@
 */
 
 import { defineConfig } from '@adonisjs/core/app'
+import type { MetaFileNode } from '@adonisjs/application/types'
+
+/*
+|--------------------------------------------------------------------------
+| Meta Files
+|--------------------------------------------------------------------------
+|
+| Apenas os diretórios necessários são copiados durante o build. Todo o
+| restante — incluindo testes, migrations, seeders, arquivos TS e sourcemaps —
+| fica de fora do bundle final.
+|
+*/
+const metaIncludePatterns = [
+  'app/**',
+  'start/**',
+  'config/**',
+  'bin/**',
+  'ace.js',
+  'public/**',
+  'resources/views/**',
+]
+
+const metaExcludePatterns = [
+  'tests/**',
+  'database/**',
+  'database/migrations/**',
+  'database/seeders/**',
+  '**/*.map',
+  '**/*.ts',
+  'resources/js/**',
+]
+
+const staticAssets = ['ace.js', 'public/**', 'resources/views/**']
+
+const metaFiles: MetaFileNode[] = [
+  ...metaIncludePatterns.map((pattern) => ({
+    pattern,
+    reloadServer: !staticAssets.includes(pattern),
+  })),
+  ...metaExcludePatterns.map((pattern) => ({
+    pattern: `!${pattern}`,
+    reloadServer: false,
+  })),
+]
+
+const providers = [
+  () => import('@adonisjs/core/providers/app_provider'),
+  () => import('@adonisjs/core/providers/hash_provider'),
+  {
+    file: () => import('@adonisjs/core/providers/repl_provider'),
+    environment: ['repl', 'test'],
+  },
+  () => import('@adonisjs/core/providers/vinejs_provider'),
+  () => import('@adonisjs/cors/cors_provider'),
+  () => import('@adonisjs/lucid/database_provider'),
+  () => import('@adonisjs/auth/auth_provider'),
+  () => import('@adonisjs/mail/mail_provider'),
+]
 
 export default defineConfig({
   /*
@@ -16,11 +74,7 @@ export default defineConfig({
   | Providers
   |--------------------------------------------------------------------------
   */
-  providers: [
-    () => import('@adonisjs/core'),
-    () => import('@adonisjs/lucid'),
-    () => import('@adonisjs/mail'),
-  ],
+  providers,
 
   /*
   |--------------------------------------------------------------------------
@@ -38,8 +92,8 @@ export default defineConfig({
   |--------------------------------------------------------------------------
   */
   preloads: [
-    () => import('./start/kernel'),
-    () => import('./start/routes'),
+    () => import('./start/kernel.js'),
+    () => import('./start/routes.js'),
   ],
 
   /*
@@ -47,49 +101,19 @@ export default defineConfig({
   | AQUI ESTÁ O SEGREDO DO BUILD LIMPO
   |--------------------------------------------------------------------------
   */
-  metaFiles: {
-    /*
-    | Não copiar TUDO como estava antes. Copiar apenas o essencial.
-    */
-    patterns: [
-      'public/**',          // apenas se usar arquivos estáticos
-      'resources/views/**', // apenas se usar view engine — se API only, remova
-      'start/**',           // necessário
-      'app/**',             // código da aplicação
-      'config/**',          // configs
-      'ace.js',             // cli build
-      'bin/**',             // entrypoints
-    ],
-
-    /*
-    | NÃO copiar:
-    | - tests
-    | - database
-    | - .map
-    | - arquivos TS
-    | - configs duplicadas
-    | - migrações
-    | - seeds
-    */
-    exclude: [
-      '**/*.spec.ts',
-      '**/*.spec.js',
-      '**/*.map',
-      'tests/**',
-      'database/**',
-      'resources/js/**',
-    ],
-  },
+  metaFiles,
 
   /*
   |--------------------------------------------------------------------------
   | Ponto de entrada do servidor
   |--------------------------------------------------------------------------
   */
-  entrypoints: {
-    commands: './bin/console.ts',
-    http: './bin/server.ts',
-  },
+  ...( {
+    entrypoints: {
+      commands: './bin/console.ts',
+      http: './bin/server.ts',
+    },
+  } as any ),
 
   /*
   |--------------------------------------------------------------------------
