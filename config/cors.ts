@@ -18,12 +18,7 @@ const allowedOrigins = allowAllOrigins
 
 const corsConfig = defineConfig({
   enabled: true,
-  origin:
-    allowedOrigins === true
-      ? true
-      : allowedOrigins.length === 0
-        ? true
-        : allowedOrigins,
+  origin: allowedOrigins === true ? true : allowedOrigins.length === 0 ? true : allowedOrigins,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   headers: true,
   exposeHeaders: ['Authorization'],

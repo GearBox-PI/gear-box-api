@@ -111,7 +111,7 @@ export default class BudgetsService {
     const budget = await Budget.create({
       clientId: payload.clientId,
       carId: payload.carId,
-      userId: payload.status === 'aceito' ? payload.assignedToId ?? authUser.id : authUser.id,
+      userId: payload.status === 'aceito' ? (payload.assignedToId ?? authUser.id) : authUser.id,
       createdById: authUser.id,
       description: payload.description,
       amount: String(payload.amount),
