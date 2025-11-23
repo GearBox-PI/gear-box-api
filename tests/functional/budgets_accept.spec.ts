@@ -32,9 +32,7 @@ test.group('Budget acceptance flow', (group) => {
   const inactiveMechanicEmail = 'mec4@gearbox.com'
 
   let adminId: string
-  let mechanicId: string
   let assignedMechanicId: string
-  let otherMechanicId: string
   let inactiveMechanicId: string
 
   group.setup(async () => {
@@ -42,7 +40,7 @@ test.group('Budget acceptance flow', (group) => {
       { email: adminEmail },
       { nome: 'Admin', email: adminEmail, senha: 'senha123', tipo: 'dono' }
     )
-    const mechanic = await User.updateOrCreate(
+    await User.updateOrCreate(
       { email: mechanicEmail },
       { nome: 'Mec', email: mechanicEmail, senha: 'senha123', tipo: 'mecanico' }
     )
@@ -50,7 +48,7 @@ test.group('Budget acceptance flow', (group) => {
       { email: secondMechanicEmail },
       { nome: 'Mec2', email: secondMechanicEmail, senha: 'senha123', tipo: 'mecanico' }
     )
-    const otherMechanic = await User.updateOrCreate(
+    await User.updateOrCreate(
       { email: otherMechanicEmail },
       { nome: 'Mec3', email: otherMechanicEmail, senha: 'senha123', tipo: 'mecanico' }
     )
@@ -66,9 +64,7 @@ test.group('Budget acceptance flow', (group) => {
     )
 
     adminId = admin.id
-    mechanicId = mechanic.id
     assignedMechanicId = assignedMechanic.id
-    otherMechanicId = otherMechanic.id
     inactiveMechanicId = inactiveMechanic.id
   })
 

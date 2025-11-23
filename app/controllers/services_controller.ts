@@ -3,7 +3,6 @@ import { createServiceValidator, updateServiceValidator } from '#validators/serv
 import ServicesService from '#services/services_service'
 import { inject } from '@adonisjs/core'
 
-const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 const VIEW_FORBIDDEN = {
   error:
@@ -35,6 +34,10 @@ export default class ServicesController {
     const result = await this.servicesService.get({ id: params.id, authUser: auth.user })
     if (result.status === 'not_found') return response.notFound({ error: 'Serviço não encontrado' })
     if (result.status === 'forbidden') return response.forbidden(VIEW_FORBIDDEN)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao buscar serviço.' })
     return result.data
   }
 
@@ -47,6 +50,8 @@ export default class ServicesController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao criar serviço.' })
     return response.created(result.data)
   }
 
@@ -69,6 +74,8 @@ export default class ServicesController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao atualizar serviço.' })
     return result.data
   }
 

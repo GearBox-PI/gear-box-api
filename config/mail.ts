@@ -5,6 +5,9 @@ import { InferMailers } from '@adonisjs/mail/types'
 const secure = env.get('MAIL_SECURE', false)
 const ignoreTls = env.get('MAIL_IGNORE_TLS', false)
 
+const mailUsername = env.get('MAIL_USERNAME')
+const mailPassword = env.get('MAIL_PASSWORD')
+
 const mailConfig = defineConfig({
   default: 'smtp',
   from: env.get('MAIL_FROM', 'Gear Box <no-reply@gearbox.com>'),
@@ -19,11 +22,11 @@ const mailConfig = defineConfig({
           }
         : undefined,
       auth:
-        env.get('MAIL_USERNAME') && env.get('MAIL_PASSWORD')
+        mailUsername && mailPassword
           ? {
               type: 'login',
-              user: env.get('MAIL_USERNAME'),
-              pass: env.get('MAIL_PASSWORD'),
+              user: mailUsername,
+              pass: mailPassword,
             }
           : undefined,
     }),

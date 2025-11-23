@@ -47,7 +47,6 @@ type UpdateServiceInput = {
 
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
-
 const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
 
@@ -71,11 +70,9 @@ function parseToDateTime(value: unknown) {
 
 export default class ServicesService {
   async list({ page, perPage, authUser }: PaginateInput) {
-    const query = Service.query()
-      .preload('user')
-      .preload('updatedBy')
-      .preload('budget', (budgetQuery) => budgetQuery.preload('user'))
-      .orderBy('created_at', 'desc')
+    const query = Service.query().preload('user').preload('updatedBy')
+    query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
+    query.orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
       const mechanicId = authUser.id
@@ -83,7 +80,9 @@ export default class ServicesService {
         builder
           .where('assigned_to', mechanicId)
           .orWhere('user_id', mechanicId)
-          .orWhereHas('budget', (budgetQuery) => budgetQuery.where('user_id', mechanicId))
+          .orWhereHas('budget' as any, (budgetQuery: any) =>
+            budgetQuery.where('user_id', mechanicId)
+          )
       )
     }
 
@@ -91,12 +90,9 @@ export default class ServicesService {
   }
 
   async get({ id, authUser }: ServiceOperationInput): Promise<ServiceResult<Service>> {
-    const service = await Service.query()
-      .where('id', id)
-      .preload('user')
-      .preload('updatedBy')
-      .preload('budget', (budgetQuery) => budgetQuery.preload('user'))
-      .first()
+    const serviceQuery = Service.query().where('id', id).preload('user').preload('updatedBy')
+    serviceQuery.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
+    const service = await serviceQuery.first()
 
     if (!service) return notFound
 
@@ -156,7 +152,7 @@ export default class ServicesService {
 
     if (!isOwner && !isMechanic) return forbidden
 
-    const service = await Service.query().where('id', id).preload('budget').first()
+    const service = await Service.query().where('id', id).preload('budget' as any).first()
     if (!service) return notFound
 
     const mechanicId = authUser?.id

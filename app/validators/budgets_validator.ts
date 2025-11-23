@@ -10,6 +10,7 @@ export const createBudgetValidator = vine.compile(
     amount: vine.number().min(0),
     status: vine.enum(STATUS_OPTIONS).optional(),
     prazoEstimadoDias: vine.number().min(0).optional(),
+    assignedToId: vine.string().uuid().optional(),
   })
 )
 
@@ -37,4 +38,5 @@ export type CreateBudgetInput = {
   description: string
   amount: number
   status?: (typeof STATUS_OPTIONS)[number]
+  assignedToId?: string
 }

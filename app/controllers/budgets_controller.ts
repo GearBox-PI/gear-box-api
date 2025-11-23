@@ -25,7 +25,6 @@ const ACCEPT_FORBIDDEN = {
   error:
     'Você não tem permissão para atualizar o status deste orçamento. Somente o dono pode aceitar ou recusar.',
 }
-const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 
 @inject()
@@ -43,6 +42,10 @@ export default class BudgetsController {
     const result = await this.budgetsService.get({ id: params.id, authUser: auth.user })
     if (result.status === 'not_found') return response.notFound(BUDGET_NOT_FOUND)
     if (result.status === 'forbidden') return response.forbidden(VIEW_FORBIDDEN)
+    if (result.status === 'validation')
+      return response.unprocessableEntity({ errors: result.errors })
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao localizar orçamento.' })
     return result.data
   }
 
@@ -55,6 +58,8 @@ export default class BudgetsController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao criar orçamento.' })
     return response.created(result.data)
   }
 
@@ -75,6 +80,8 @@ export default class BudgetsController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao atualizar orçamento.' })
     return result.data
   }
 
@@ -101,6 +108,8 @@ export default class BudgetsController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao aceitar orçamento.' })
     return result.data
   }
 
@@ -112,6 +121,8 @@ export default class BudgetsController {
     if (result.status === 'validation')
       return response.unprocessableEntity({ errors: result.errors })
 
+    if (result.status !== 'ok')
+      return response.internalServerError({ error: 'Falha ao recusar orçamento.' })
     return result.data
   }
 }

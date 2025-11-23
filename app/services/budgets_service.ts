@@ -36,6 +36,7 @@ type CreateBudgetInput = {
   amount: number
   status?: 'aberto' | 'aceito' | 'recusado' | 'cancelado'
   prazoEstimadoDias?: number | null
+  assignedToId?: string
   authUser: AuthUser
 }
 
@@ -102,7 +103,7 @@ export default class BudgetsService {
   }
 
   async create(input: CreateBudgetInput): Promise<ServiceResult<Budget>> {
-    const { authUser, ...payload } = input
+    const { authUser, assignedToId, ...payload } = input
     if (!authUser || ![MECHANIC_ROLE, ADMIN_ROLE].includes(authUser.tipo)) return forbidden
 
     const { errors: validationErrors } = await validateClientAndCar(payload.clientId, payload.carId)
@@ -111,7 +112,7 @@ export default class BudgetsService {
     const budget = await Budget.create({
       clientId: payload.clientId,
       carId: payload.carId,
-      userId: payload.status === 'aceito' ? (payload.assignedToId ?? authUser.id) : authUser.id,
+      userId: payload.status === 'aceito' ? (assignedToId ?? authUser.id) : authUser.id,
       createdById: authUser.id,
       description: payload.description,
       amount: String(payload.amount),
