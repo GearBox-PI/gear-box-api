@@ -2,11 +2,16 @@ import { defineConfig } from '@adonisjs/core/logger'
 
 const loggerConfig = defineConfig({
   default: 'app',
+
   loggers: {
     app: {
       enabled: true,
       name: 'application',
       level: 'info',
+      /**
+       * No transport → usa Pino padrão
+       * 100% compatível com Azure App Service (stdout)
+       */
     },
   },
 })
@@ -14,11 +19,10 @@ const loggerConfig = defineConfig({
 export default loggerConfig
 
 /**
- * Inferring types for the list of loggers you have configured
- * in your application.
+ * Tipagem do Adonis para o logger "app"
  */
 declare module '@adonisjs/core/types' {
   export interface LoggersList {
-    app: (typeof loggerConfig.loggers)['app']
+    app: typeof loggerConfig.loggers.app
   }
 }
