@@ -11,11 +11,18 @@
 
 import { Env } from '@adonisjs/core/env'
 
-export default await Env.create(new URL('../', import.meta.url), {
+const appRoot = new URL('../', import.meta.url)
+const runningFromBuild = appRoot.pathname.includes('/build/')
+const allowDotEnvInBuild = process.env.ADONIS_ALLOW_BUILD_DOTENV === 'true'
+const shouldSkipDotEnv = runningFromBuild && !allowDotEnvInBuild
+const DEFAULT_HOST = process.env.HOST || '0.0.0.0'
+const DEFAULT_PORT = Number(process.env.PORT || '8080') || 8080
+
+const schema = {
   NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
-  PORT: Env.schema.number(),
+  PORT: Env.schema.number.optional(),
   APP_KEY: Env.schema.string(),
-  HOST: Env.schema.string({ format: 'host' }),
+  HOST: Env.schema.string.optional({ format: 'host' }),
   LOG_LEVEL: Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
   APP_NAME: Env.schema.string.optional(),
   CORS_ALLOWED_ORIGINS: Env.schema.string.optional(),
@@ -47,4 +54,50 @@ export default await Env.create(new URL('../', import.meta.url), {
   MAIL_FROM: Env.schema.string.optional(),
   MAIL_SECURE: Env.schema.boolean.optional(),
   MAIL_IGNORE_TLS: Env.schema.boolean.optional(),
-})
+}
+
+type EnvInstance = InstanceType<typeof Env>
+
+function applyNetworkFallbacks(env: EnvInstance) {
+  let host = env.get('HOST')
+  if (!host) {
+    host = DEFAULT_HOST
+    console.warn(`[ENV] HOST missing or invalid. Falling back to "${host}".`)
+    env.set('HOST', host)
+  }
+
+  let port = Number(env.get('PORT'))
+  if (!Number.isFinite(port) || port <= 0) {
+    port = DEFAULT_PORT
+    console.warn(`[ENV] PORT missing or invalid. Falling back to ${port}.`)
+    env.set('PORT', port)
+  }
+}
+
+async function createEnv() {
+  try {
+    if (shouldSkipDotEnv) {
+      console.info('[ENV] Running from compiled build — ignoring local .env files.')
+      const validator = Env.rules(schema)
+      return new Env(validator.validate({}))
+    }
+
+    return await Env.create(appRoot, schema)
+  } catch (error: any) {
+    console.error('[ENV] Failed to load environment variables.')
+
+    if (error?.help) {
+      console.error(error.help)
+    } else {
+      console.error(error)
+    }
+
+    throw error
+  }
+}
+
+const env = await createEnv()
+
+applyNetworkFallbacks(env)
+
+export default env
