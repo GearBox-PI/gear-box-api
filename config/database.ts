@@ -10,7 +10,7 @@ const databaseName =
 const connectionName = Env.get('DB_CONNECTION', 'pg') as 'pg'
 
 const databasePath = (relativePath: string) =>
-  runningFromBuild ? `build/${relativePath}` : relativePath
+  runningFromBuild ? `./${relativePath}` : relativePath
 
 const pgConnectionConfig: PostgreConfig = {
   client: 'pg',
