@@ -33,5 +33,5 @@ COPY --from=builder --chown=adonis:adonis /app/database ./database
 USER adonis
 EXPOSE 3333
 
-# Executa migrations, seeders essenciais e inicia o servidor
-ENTRYPOINT ["sh", "-c", "node build/ace.js migration:run --force || true; node build/ace.js db:seed --files database/seeders/user_seeder || true; node build/server.js"]
+# Executa migrations, seeders completos e inicia o servidor
+ENTRYPOINT ["sh", "-c", "node build/ace.js migration:run --force || true; node build/ace.js db:seed --files database/seeders/data_seeder || true; node build/server.js"]

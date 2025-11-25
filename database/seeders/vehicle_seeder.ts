@@ -86,7 +86,7 @@ function randomPlate(index: number) {
 }
 
 export default class VehicleSeeder extends BaseSeeder {
-  public static environment = ['development', 'testing']
+  public static environment = ['development', 'testing', 'production']
 
   async run() {
     const users = await User.all()

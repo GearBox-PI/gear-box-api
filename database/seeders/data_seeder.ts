@@ -5,7 +5,7 @@ import BudgetSeeder from './budget_seeder.js'
 import ServiceSeeder from './service_seeder.js'
 
 export default class DataSeeder extends BaseSeeder {
-  public static environment = ['development', 'testing']
+  public static environment = ['development', 'testing', 'production']
 
   async run() {
     await new UserSeeder(this.client).run()

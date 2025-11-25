@@ -45,7 +45,7 @@ function randomStatus(): 'aberto' | 'aceito' | 'recusado' {
 }
 
 export default class BudgetSeeder extends BaseSeeder {
-  public static environment = ['development', 'testing']
+  public static environment = ['development', 'testing', 'production']
 
   async run() {
     const cars = await Car.query().preload('client')

@@ -42,7 +42,7 @@ function randomValue(min = 150, max = 1500) {
 }
 
 export default class ServiceSeeder extends BaseSeeder {
-  public static environment = ['development', 'testing']
+  public static environment = ['development', 'testing', 'production']
 
   async run() {
     const budgets = await Budget.query().where('status', 'aceito')
