@@ -377,6 +377,32 @@ paths:
       summary: Listar serviços
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: startDate
+          description: Data inicial (ISO 8601) para filtrar pela data de criação
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          description: Data final (ISO 8601) para filtrar pela data de criação
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Lista paginada de serviços

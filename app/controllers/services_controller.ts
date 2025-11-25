@@ -25,8 +25,10 @@ export default class ServicesController {
   async index({ request, auth }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
+    const startDate = request.input('startDate')
+    const endDate = request.input('endDate')
 
-    return this.servicesService.list({ page, perPage, authUser: auth.user })
+    return this.servicesService.list({ page, perPage, authUser: auth.user, startDate, endDate })
   }
 
   // Detalhar serviço

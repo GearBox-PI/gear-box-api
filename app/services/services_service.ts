@@ -14,7 +14,15 @@ type ServiceError =
 
 type ServiceResult<T> = { status: 'ok'; data: T } | ServiceError
 
-type PaginateInput = { page: number; perPage: number; authUser: AuthUser }
+type DateInput = string | Date | DateTime | null | undefined
+
+type PaginateInput = {
+  page: number
+  perPage: number
+  authUser: AuthUser
+  startDate?: DateInput
+  endDate?: DateInput
+}
 
 type ServiceOperationInput = { id: string; authUser: AuthUser }
 
@@ -69,7 +77,7 @@ function parseToDateTime(value: unknown) {
 }
 
 export default class ServicesService {
-  async list({ page, perPage, authUser }: PaginateInput) {
+  async list({ page, perPage, authUser, startDate, endDate }: PaginateInput) {
     const query = Service.query().preload('user').preload('updatedBy')
     query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     query.orderBy('created_at', 'desc')
@@ -84,6 +92,16 @@ export default class ServicesService {
             budgetQuery.where('user_id', mechanicId)
           )
       )
+    }
+
+    const parsedStart = parseToDateTime(startDate)
+    if (parsedStart) {
+      query.where('created_at', '>=', parsedStart.startOf('day').toSQL())
+    }
+
+    const parsedEnd = parseToDateTime(endDate)
+    if (parsedEnd) {
+      query.where('created_at', '<=', parsedEnd.endOf('day').toSQL())
     }
 
     return query.paginate(page, perPage)
