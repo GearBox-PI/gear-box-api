@@ -274,3 +274,16 @@ Configuração opcional (.prettierrc):
 - O Docker Desktop para Windows pode exigir configuração adicional para compartilhar volumes corretamente.
 - Certifique-se de que o WSL 2 está instalado e habilitado, pois o Docker Desktop o utiliza como backend por padrão.
 - Para desempenho ideal, ajuste as configurações de recursos do Docker Desktop (CPU, memória, disco) conforme necessário.
+
+## 📄 Licença
+
+Este projeto é licenciado sob os termos da **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+Isso significa que:
+- qualquer modificação ou derivação deve permanecer como software livre;
+- melhorias feitas por terceiros precisam ser disponibilizadas publicamente
+  caso o software seja utilizado via rede (como serviço web);
+- cópias, redistribuições ou forks devem manter a mesma licença.
+
+Para consultar o texto completo da licença, acesse o arquivo [LICENSE](./LICENSE)
+ou visite https://www.gnu.org/licenses/agpl-3.0.html.
