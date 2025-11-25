@@ -26,17 +26,19 @@ const schema = {
   LOG_LEVEL: Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
   APP_NAME: Env.schema.string.optional(),
   CORS_ALLOWED_ORIGINS: Env.schema.string.optional(),
+  HASH_DRIVER: Env.schema.enum.optional(['scrypt', 'bcrypt'] as const),
 
   /*
   |----------------------------------------------------------
   | Variables for configuring database connection
   |----------------------------------------------------------
   */
-  DB_HOST: Env.schema.string({ format: 'host' }),
-  DB_PORT: Env.schema.number(),
-  DB_USER: Env.schema.string(),
+  DATABASE_URL: Env.schema.string.optional(),
+  DB_HOST: Env.schema.string.optional({ format: 'host' }),
+  DB_PORT: Env.schema.number.optional(),
+  DB_USER: Env.schema.string.optional(),
   DB_PASSWORD: Env.schema.string.optional(),
-  DB_DATABASE: Env.schema.string(),
+  DB_DATABASE: Env.schema.string.optional(),
   // Banco de testes (opcional). Se definido e NODE_ENV=test, será utilizado no lugar de DB_DATABASE
   DB_DATABASE_TEST: Env.schema.string.optional(),
   DB_SSL: Env.schema.boolean.optional(),
@@ -74,6 +76,18 @@ function applyNetworkFallbacks(env: EnvInstance) {
   }
 }
 
+function ensureDatabaseConfig(env: EnvInstance) {
+  const hasConnectionUrl = !!env.get('DATABASE_URL')
+  const hasLegacyConfig =
+    !!env.get('DB_HOST') && !!env.get('DB_PORT') && !!env.get('DB_USER') && !!env.get('DB_DATABASE')
+
+  if (!hasConnectionUrl && !hasLegacyConfig) {
+    throw new Error(
+      '[ENV] Configure DATABASE_URL or complete DB_HOST/DB_PORT/DB_USER/DB_DATABASE variables.'
+    )
+  }
+}
+
 async function createEnv() {
   try {
     if (shouldSkipDotEnv) {
@@ -99,5 +113,6 @@ async function createEnv() {
 const env = await createEnv()
 
 applyNetworkFallbacks(env)
+ensureDatabaseConfig(env)
 
 export default env

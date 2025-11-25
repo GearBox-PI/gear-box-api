@@ -16,6 +16,24 @@
 |
 */
 
+const PRODUCTION_FLAG = '--production'
+const runtimeArgs = process.argv.slice(2)
+let shouldForceProduction = false
+const filteredArgs = runtimeArgs.filter((arg) => {
+  if (arg === PRODUCTION_FLAG) {
+    shouldForceProduction = true
+    return false
+  }
+  return true
+})
+
+if (shouldForceProduction) {
+  if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'production'
+  }
+  process.argv.splice(2, process.argv.length - 2, ...filteredArgs)
+}
+
 /**
  * Register hook to process TypeScript files using ts-node
  */

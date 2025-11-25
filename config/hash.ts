@@ -1,7 +1,8 @@
+import env from '#start/env'
 import { defineConfig, drivers } from '@adonisjs/core/hash'
 
 const hashConfig = defineConfig({
-  default: 'scrypt',
+  default: env.get('HASH_DRIVER', 'scrypt'),
 
   list: {
     scrypt: drivers.scrypt({
