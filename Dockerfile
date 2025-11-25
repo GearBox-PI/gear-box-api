@@ -1,3 +1,4 @@
+ARG CACHEBUST=1
 # ---------- Base ----------
 FROM node:20-alpine AS base
 WORKDIR /app
