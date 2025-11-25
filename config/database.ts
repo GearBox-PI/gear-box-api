@@ -30,6 +30,9 @@ const connectionName = Env.get('DB_CONNECTION', 'pg') as 'pg'
 const databasePath = (relativePath: string) =>
   runningFromBuild ? `./${relativePath}` : relativePath
 
+const useSsl = Env.get('DB_SSL', false)
+const sslRejectUnauthorized = Env.get('DB_SSL_REJECT_UNAUTHORIZED', false)
+
 const pgConnectionConfig: PostgreConfig = {
   client: 'pg',
   connection: {
@@ -38,9 +41,11 @@ const pgConnectionConfig: PostgreConfig = {
     user: Env.get('DB_USER'),
     password: Env.get('DB_PASSWORD'),
     database: databaseName,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    ssl: useSsl
+      ? {
+          rejectUnauthorized: sslRejectUnauthorized,
+        }
+      : undefined,
   },
   pool: {
     min: 0,

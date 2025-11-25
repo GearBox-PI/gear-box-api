@@ -19,19 +19,15 @@ npm i
 # 2) Crie o .env a partir do exemplo
 cp .env.example .env
 
-# 3) Ajuste o .env para usar o Postgres do docker-compose
-#    Valores recomendados (bata com o docker-compose.yml):
-#    DB_HOST=seu_host_pg
-#    DB_PORT=5432
-#    DB_USER=gearbox
-#    DB_PASSWORD=gearbox
-#    DB_DATABASE=gearbox_dev
+# 3) Ajuste o .env se necessário (ele já vem configurado para o docker-compose local)
+#    Caso mude usuários/porta no docker-compose.yml, reflita aqui.
 
 # 4) Gere a APP_KEY (necessário para rodar Ace e o app)
 node ace generate:key
 
 # 5) Suba o banco de dados
-docker compose up -d
+npm run dev:db
+# (alternativa manual) docker compose up -d
 
 # 6) Rode as migrações
 node ace migration:run
@@ -40,6 +36,7 @@ node ace migration:run
 node ace db:seed
 
 # 8) Rode a API em modo desenvolvimento (HMR)
+# Este comando garante o Postgres ligado antes de iniciar o Adonis.
 npm run dev
 ```
 
@@ -51,15 +48,26 @@ Observações:
 ## Configuração do .env (exemplo mínimo funcional)
 
 ```env
-TZ=UTC
-APP_NAME=Gear Box API
-PORT=3333
 HOST=0.0.0.0
-LOG_LEVEL=info
-APP_KEY= # será preenchida pelo "node ace generate:key"
+PORT=3333
 NODE_ENV=development
-CORS_ALLOWED_ORIGINS=https://app.seudominio.com
-DB_HOST=seu_host_pg
+LOG_LEVEL=info
+APP_NAME=Gear Box API
+APP_KEY= # será preenchida pelo "node ace generate:key"
+HASH_DRIVER=bcrypt
+CORS_ALLOWED_ORIGINS=*
+
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM="Gear Box <no-reply@gearbox.com>"
+MAIL_SECURE=false
+MAIL_IGNORE_TLS=false
+
+# Banco local via docker-compose
+DB_CONNECTION=pg
+DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_USER=gearbox
 DB_PASSWORD=gearbox
@@ -68,14 +76,6 @@ DB_SSL=false
 DB_SSL_REJECT_UNAUTHORIZED=false
 # Opcional para testes automatizados (usa quando NODE_ENV=test)
 # DB_DATABASE_TEST=gearbox_test
-
-MAIL_HOST=smtp.example.com
-MAIL_PORT=2525
-MAIL_USERNAME=
-MAIL_PASSWORD=
-MAIL_FROM="Gear Box <no-reply@gearbox.com>"
-MAIL_SECURE=false
-MAIL_IGNORE_TLS=false
 ```
 
 > Em bancos gerenciados (como Azure Database for PostgreSQL), defina `DB_SSL=true`. Caso o servidor use certificados internos, ajuste `DB_SSL_REJECT_UNAUTHORIZED=false` até instalar o certificado confiável.
@@ -109,9 +109,9 @@ curl -sS -X POST https://gearbox.example.com/login \
 
 ## Comandos úteis
 
-- Subir/derrubar banco:
-  - `docker compose up -d`
-  - `docker compose down`
+- Banco de dados:
+  - `npm run dev:db`
+  - `npm run db:down`
 - Migrações:
   - `node ace migration:run`
   - `node ace migration:rollback`
