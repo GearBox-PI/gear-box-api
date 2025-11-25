@@ -34,6 +34,7 @@ const schema = {
   |----------------------------------------------------------
   */
   DATABASE_URL: Env.schema.string.optional(),
+  DB_CONNECTION: Env.schema.enum.optional(['pg'] as const),
   DB_HOST: Env.schema.string.optional({ format: 'host' }),
   DB_PORT: Env.schema.number.optional(),
   DB_USER: Env.schema.string.optional(),

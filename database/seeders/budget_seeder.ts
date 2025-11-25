@@ -23,7 +23,7 @@ const budgetDescriptions = [
   'Troca de bomba d’água',
   'Substituição de embreagem',
   'Instalação de acessórios elétricos',
-] as const
+]
 
 function randomDate(start: Date, end: Date) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))

@@ -1,44 +1,47 @@
-import env from '#start/env'
+import Env from '#start/env'
 import { defineConfig } from '@adonisjs/lucid'
+import type { PostgreConfig } from '@adonisjs/lucid/types/database'
 
-const usingConnectionString = !!env.get('DATABASE_URL')
+const runningFromBuild = new URL('../', import.meta.url).pathname.includes('/build/')
+const databaseName =
+  Env.get('NODE_ENV') === 'test' && Env.get('DB_DATABASE_TEST')
+    ? Env.get('DB_DATABASE_TEST')
+    : Env.get('DB_DATABASE')
+const connectionName = Env.get('DB_CONNECTION', 'pg') as 'pg'
 
-const pgConnection: Record<string, any> = usingConnectionString
-  ? {
-      connectionString: env.get('DATABASE_URL'),
-    }
-  : {
-      host: env.get('DB_HOST'),
-      port: env.get('DB_PORT'),
-      user: env.get('DB_USER'),
-      password: env.get('DB_PASSWORD'),
-      database:
-        env.get('NODE_ENV') === 'test' && env.get('DB_DATABASE_TEST')
-          ? env.get('DB_DATABASE_TEST')
-          : env.get('DB_DATABASE'),
-    }
+const databasePath = (relativePath: string) =>
+  runningFromBuild ? `build/${relativePath}` : relativePath
 
-const shouldUseSsl = env.get('DB_SSL', usingConnectionString)
-
-if (shouldUseSsl) {
-  Object.assign(pgConnection, {
-    ssl: {
-      rejectUnauthorized: env.get('DB_SSL_REJECT_UNAUTHORIZED', false),
-    },
-  })
+const pgConnectionConfig: PostgreConfig = {
+  client: 'pg',
+  connection: {
+    host: Env.get('DB_HOST'),
+    port: Env.get('DB_PORT'),
+    user: Env.get('DB_USER'),
+    password: Env.get('DB_PASSWORD'),
+    database: databaseName,
+    ssl: Env.get('DB_SSL', false)
+      ? { rejectUnauthorized: false }
+      : false,
+  },
+  pool: {
+    min: 0,
+    max: 10,
+  },
+  migrations: {
+    naturalSort: true,
+    paths: [databasePath('database/migrations')],
+  },
+  seeders: {
+    naturalSort: true,
+    paths: [databasePath('database/seeders')],
+  },
 }
 
 const dbConfig = defineConfig({
-  connection: 'postgres',
+  connection: connectionName,
   connections: {
-    postgres: {
-      client: 'pg',
-      connection: pgConnection,
-      migrations: {
-        naturalSort: true,
-        paths: ['database/migrations'],
-      },
-    },
+    [connectionName]: pgConnectionConfig,
   },
 })
 

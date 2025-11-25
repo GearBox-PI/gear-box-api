@@ -41,11 +41,11 @@ npm run dev</code></pre>
         <pre><code>
 TZ=UTC
 PORT=3333
-HOST=localhost
+HOST=0.0.0.0
 LOG_LEVEL=info
 APP_KEY=... # gerado por "node ace generate:key"
 NODE_ENV=development
-DB_HOST=localhost
+DB_HOST=seu_host_pg
 DB_PORT=5432
 DB_USER=gearbox
 DB_PASSWORD=gearbox
@@ -64,7 +64,7 @@ DB_DATABASE=gearbox_dev
         <div class="steps">
           <div class="step">
             <h3>1) Requisição</h3>
-            <pre><code>POST http://localhost:3333/login
+            <pre><code>POST https://gearbox.example.com/login
 Content-Type: application/json
 
 {
@@ -74,7 +74,7 @@ Content-Type: application/json
           </div>
           <div class="step">
             <h3>2) Exemplo via curl</h3>
-            <pre><code>curl -sS -X POST http://localhost:3333/login \
+            <pre><code>curl -sS -X POST https://gearbox.example.com/login \
   -H "Content-Type: application/json" \
   -d '{"email":"dono@gearbox.com","password":"senha123"}'</code></pre>
             <div class="callout note">
@@ -99,7 +99,7 @@ Content-Type: application/json
               <li>Nome: <strong>Gear Box API</strong>.</li>
               <li>
                 Na aba <strong>Variables</strong>: adicione <code>baseUrl</code> =
-                <code>http://localhost:3333</code>.
+                <code>https://gearbox.example.com</code>.
               </li>
             </ul>
           </div>
@@ -214,7 +214,7 @@ if (token) {
 
         <h3>Logout</h3>
         <pre><code>
-DELETE http://localhost:3333/logout
+DELETE https://gearbox.example.com/logout
 Authorization: Bearer &lt;token&gt;</code></pre>
 
         <h2>Documentação</h2>

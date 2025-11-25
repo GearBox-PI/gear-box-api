@@ -92,7 +92,7 @@ export default class VehicleSeeder extends BaseSeeder {
     const users = await User.all()
     const userIds = users.map((user) => user.id)
 
-    const clients = []
+    const clients: Client[] = []
     for (const data of clientSeeds) {
       const auditUser = randomItem(userIds)
       const createdAt = DateTime.fromJSDate(randomDate(START_DATE, END_DATE))

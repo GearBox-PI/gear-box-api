@@ -15,8 +15,8 @@ COPY . .
 # Compila o Adonis para produção (gera a pasta build/)
 RUN npm run build
 
-# Mantém dev deps para rodar o ace.js compilado
-RUN npm install --omit=prod
+# Remove dependências de desenvolvimento após o build
+RUN npm prune --omit=dev
 
 # ---------- Runtime ----------
 FROM node:20-alpine AS runner

@@ -21,7 +21,7 @@ cp .env.example .env
 
 # 3) Ajuste o .env para usar o Postgres do docker-compose
 #    Valores recomendados (bata com o docker-compose.yml):
-#    DB_HOST=localhost
+#    DB_HOST=seu_host_pg
 #    DB_PORT=5432
 #    DB_USER=gearbox
 #    DB_PASSWORD=gearbox
@@ -58,8 +58,8 @@ HOST=0.0.0.0
 LOG_LEVEL=info
 APP_KEY= # será preenchida pelo "node ace generate:key"
 NODE_ENV=development
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-DB_HOST=localhost
+CORS_ALLOWED_ORIGINS=https://app.seudominio.com
+DB_HOST=seu_host_pg
 DB_PORT=5432
 DB_USER=gearbox
 DB_PASSWORD=gearbox
@@ -82,8 +82,8 @@ MAIL_IGNORE_TLS=false
 
 ## Documentação da API
 
-- OpenAPI (YAML): <http://localhost:3333/docs/openapi.yaml>
-- Swagger UI: <http://localhost:3333/docs>
+- OpenAPI (YAML): <https://gearbox.example.com/docs/openapi.yaml>
+- Swagger UI: <https://gearbox.example.com/docs>
   - Clique em “Authorize” e informe: `Bearer <seu-token>`
   - Você pode importar o YAML no Postman/Insomnia: abra o app > Import > selecione `docs/openapi.yaml`.
 
@@ -102,7 +102,7 @@ Notas de autorização:
 Exemplo de login (curl):
 
 ```bash
-curl -sS -X POST http://localhost:3333/login \
+curl -sS -X POST https://gearbox.example.com/login \
   -H "Content-Type: application/json" \
   -d '{"email":"dono@gearbox.com","password":"senha123"}'
 ```
@@ -166,7 +166,7 @@ O bootstrap derruba/roda migrações e executa seed automaticamente para o ambie
 ### Login
 
 - Método: `POST`
-- URL: `http://localhost:3333/login`
+- URL: `https://gearbox.example.com/login`
 - Headers: `Content-Type: application/json`
 - Payload:
 
@@ -212,7 +212,7 @@ Authorization: Bearer <token>
 ### Logout
 
 - Método: `DELETE`
-- URL: `http://localhost:3333/logout`
+- URL: `https://gearbox.example.com/logout`
 - Headers: `Authorization: Bearer <token>`
 - Efeito: revoga todos os tokens do usuário autenticado.
 - Resposta: `204 No Content`

@@ -7,7 +7,7 @@ info:
     - Login: POST /login
     - Logout: DELETE /logout
 servers:
-  - url: http://localhost:3333
+  - url: https://gearbox.example.com
 
 tags:
   - name: Auth

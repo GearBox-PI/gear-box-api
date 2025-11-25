@@ -20,7 +20,7 @@ const serviceDescriptions = [
   'Alinhamento e balanceamento',
   'Reparo no ar-condicionado',
   'Substituição de amortecedores',
-] as const
+]
 
 function randomDate(start: Date, end: Date) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
