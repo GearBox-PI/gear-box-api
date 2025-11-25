@@ -6,7 +6,9 @@ import User from '#models/user'
 
 const START_DATE = new Date(2022, 0, 1)
 const END_DATE = new Date()
+const CURRENT_MONTH_START = DateTime.local().startOf('month')
 const BUDGET_COUNT = 60
+const CURRENT_MONTH_BUDGETS = 25
 
 const budgetDescriptions = [
   'Troca de óleo e filtros',
@@ -76,6 +78,30 @@ export default class BudgetSeeder extends BaseSeeder {
       })
     }
 
-    await Budget.createMany(payload)
+    const currentMonthPayload = []
+    for (let index = 0; index < CURRENT_MONTH_BUDGETS; index++) {
+      const car = randomItem(cars)
+      const assignedUser = randomItem(responsibles)
+      const status: 'aberto' | 'aceito' | 'recusado' =
+        index < 18 ? 'aceito' : index < 23 ? 'aberto' : 'recusado'
+      const createdAtJS = randomDate(CURRENT_MONTH_START.toJSDate(), END_DATE)
+      const createdAt = DateTime.fromJSDate(createdAtJS)
+      const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 15) })
+      currentMonthPayload.push({
+        clientId: car.clientId,
+        carId: car.id,
+        userId: assignedUser.id,
+        createdById: Math.random() > 0.5 ? owner.id : assignedUser.id,
+        updatedById: assignedUser.id,
+        description: `(${createdAt.toFormat('LLL')}) ${randomItem(budgetDescriptions)}`,
+        amount: randomAmount(450, 6500).toFixed(2),
+        prazoEstimadoDias: Math.floor(Math.random() * 7) + 1,
+        status,
+        createdAt,
+        updatedAt,
+      })
+    }
+
+    await Budget.createMany([...payload, ...currentMonthPayload])
   }
 }

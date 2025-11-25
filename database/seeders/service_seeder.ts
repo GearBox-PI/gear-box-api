@@ -7,6 +7,7 @@ import User from '#models/user'
 const START_DATE = new Date(2022, 0, 1)
 const END_DATE = new Date()
 const SERVICE_TARGET = 38
+const CURRENT_MONTH_SERVICE_TARGET = 25
 
 const serviceDescriptions = [
   'Troca de óleo',
@@ -86,6 +87,83 @@ export default class ServiceSeeder extends BaseSeeder {
       })
     }
 
-    await Service.createMany(payload)
+    const currentMonthStart = DateTime.local().startOf('month')
+    const monthlyAcceptedBudgets = shuffledBudgets.filter((budget) => {
+      const createdAt = budget.createdAt ?? DateTime.fromJSDate(START_DATE)
+      return createdAt.toMillis() >= currentMonthStart.toMillis()
+    })
+    const monthlyPayload = []
+    const monthlyCount = Math.min(CURRENT_MONTH_SERVICE_TARGET, monthlyAcceptedBudgets.length)
+
+    for (let index = 0; index < monthlyCount; index++) {
+      const budget = monthlyAcceptedBudgets[index]
+      const assignedMechanic = mechanics[(index + 1) % mechanics.length] ?? owner
+      const baseDate =
+        budget.createdAt && budget.createdAt.toMillis() >= currentMonthStart.toMillis()
+          ? budget.createdAt
+          : currentMonthStart
+      const createdAtJS = randomDate(baseDate.toJSDate(), END_DATE)
+      const createdAt = DateTime.fromJSDate(createdAtJS)
+      const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 10) })
+      const dueDate = createdAt.plus({ days: Math.floor(Math.random() * 5) + 1 })
+      const status = ['Pendente', 'Em andamento', 'Concluído'][index % 3] as
+        | 'Pendente'
+        | 'Em andamento'
+        | 'Concluído'
+
+      monthlyPayload.push({
+        budgetId: budget.id,
+        clientId: budget.clientId,
+        carId: budget.carId,
+        userId: budget.userId,
+        assignedToId: assignedMechanic.id,
+        createdById: budget.createdById ?? owner.id,
+        updatedById: assignedMechanic.id,
+        status,
+        description: randomItem(serviceDescriptions),
+        totalValue: randomValue(300, 2000).toFixed(2),
+        prazoEstimadoDias: Math.floor(Math.random() * 8) + 1,
+        dataPrevista: dueDate,
+        createdAt,
+        updatedAt,
+      })
+    }
+
+    if (monthlyCount < CURRENT_MONTH_SERVICE_TARGET) {
+      const remaining = CURRENT_MONTH_SERVICE_TARGET - monthlyCount
+      const fallbackBudgets = shuffledBudgets.filter(
+        (budget) => !monthlyAcceptedBudgets.includes(budget)
+      )
+      for (let index = 0; index < remaining && index < fallbackBudgets.length; index++) {
+        const budget = fallbackBudgets[index]
+        const assignedMechanic = mechanics[(index + monthlyCount + 1) % mechanics.length] ?? owner
+        const createdAtJS = randomDate(currentMonthStart.toJSDate(), END_DATE)
+        const createdAt = DateTime.fromJSDate(createdAtJS)
+        const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 6) })
+        const dueDate = createdAt.plus({ days: Math.floor(Math.random() * 4) + 1 })
+        const status = ['Pendente', 'Em andamento', 'Concluído'][
+          (index + monthlyCount) % 3
+        ] as 'Pendente' | 'Em andamento' | 'Concluído'
+
+        monthlyPayload.push({
+          budgetId: budget.id,
+          clientId: budget.clientId,
+          carId: budget.carId,
+          userId: budget.userId,
+          assignedToId: assignedMechanic.id,
+          createdById: budget.createdById ?? owner.id,
+          updatedById: assignedMechanic.id,
+          status,
+          description: randomItem(serviceDescriptions),
+          totalValue: randomValue(300, 2000).toFixed(2),
+          prazoEstimadoDias: Math.floor(Math.random() * 6) + 1,
+          dataPrevista: dueDate,
+          createdAt,
+          updatedAt,
+        })
+      }
+    }
+
+    await Service.createMany([...payload, ...monthlyPayload])
   }
 }
