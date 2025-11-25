@@ -25,6 +25,14 @@ export default class MailService {
 
     const car = await MailService.getCar(service, budget)
     const estimatedDays = service.prazoEstimadoDias ?? budget.prazoEstimadoDias ?? null
+    const serviceStart = service.createdAt?.toJSDate() ?? budget.createdAt?.toJSDate() ?? new Date()
+
+    let forecastDate: Date | null = null
+    if (service.dataPrevista) {
+      forecastDate = service.dataPrevista.toJSDate()
+    } else if (estimatedDays) {
+      forecastDate = new Date(serviceStart.getTime() + estimatedDays * 24 * 60 * 60 * 1000)
+    }
 
     try {
       const response = await mail.send(
@@ -36,6 +44,8 @@ export default class MailService {
           carPlate: car?.placa ?? null,
           estimatedDays,
           initialStatus: service.status,
+          startDate: serviceStart,
+          forecastDate,
         })
       )
 

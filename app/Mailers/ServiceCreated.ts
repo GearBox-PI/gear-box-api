@@ -9,6 +9,8 @@ type ServiceCreatedMailData = {
   carPlate?: string | null
   estimatedDays?: number | null
   initialStatus: string
+  startDate?: Date | null
+  forecastDate?: Date | null
 }
 
 export default class ServiceCreated extends BaseMail {
@@ -36,6 +38,8 @@ export default class ServiceCreated extends BaseMail {
 
     const carModel = this.data.carModel ?? 'Não informado'
     const carPlate = this.data.carPlate ?? 'Não informado'
+    const startDate = this.formatDate(this.data.startDate)
+    const forecast = this.formatDate(this.data.forecastDate)
 
     return `
 <!DOCTYPE html>
@@ -133,6 +137,14 @@ export default class ServiceCreated extends BaseMail {
             <p class="label">Status inicial</p>
             <p class="value">${this.data.initialStatus}</p>
           </div>
+          <div>
+            <p class="label">Início previsto</p>
+            <p class="value">${startDate}</p>
+          </div>
+          <div>
+            <p class="label">Previsão de entrega</p>
+            <p class="value">${forecast}</p>
+          </div>
         </div>
 
         <p class="footer">
@@ -142,5 +154,14 @@ export default class ServiceCreated extends BaseMail {
     </div>
   </body>
 </html>`
+  }
+
+  private formatDate(date?: Date | null): string {
+    if (!date) return 'Não informado'
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }).format(date)
   }
 }
