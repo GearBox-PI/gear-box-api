@@ -280,6 +280,7 @@ Configuração opcional (.prettierrc):
 Este projeto é licenciado sob os termos da **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
 Isso significa que:
+
 - qualquer modificação ou derivação deve permanecer como software livre;
 - melhorias feitas por terceiros precisam ser disponibilizadas publicamente
   caso o software seja utilizado via rede (como serviço web);

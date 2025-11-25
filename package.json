@@ -9,6 +9,8 @@
     "dev:server": "node ace serve --watch",
     "dev:db": "docker compose up -d db",
     "db:down": "docker compose down",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "start": "node build/server.js",
     "build": "node ace build --production --ignore-ts-errors"
   },

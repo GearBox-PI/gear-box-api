@@ -159,9 +159,10 @@ export default class ServiceSeeder extends BaseSeeder {
         const createdAt = DateTime.fromJSDate(createdAtJS)
         const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 6) })
         const dueDate = createdAt.plus({ days: Math.floor(Math.random() * 4) + 1 })
-        const status = ['Pendente', 'Em andamento', 'Concluído'][
-          (index + monthlyCount) % 3
-        ] as 'Pendente' | 'Em andamento' | 'Concluído'
+        const status = ['Pendente', 'Em andamento', 'Concluído'][(index + monthlyCount) % 3] as
+          | 'Pendente'
+          | 'Em andamento'
+          | 'Concluído'
 
         monthlyPayload.push({
           budgetId: budget.id,

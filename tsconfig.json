@@ -33,11 +33,5 @@
     "start/**/*.ts",
     "database/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "build",
-    "tests/**",
-    "resources/js/**",
-    "**/*.map"
-  ]
+  "exclude": ["node_modules", "build", "tests/**", "resources/js/**", "**/*.map"]
 }

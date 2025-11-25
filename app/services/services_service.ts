@@ -188,7 +188,10 @@ export default class ServicesService {
 
     if (!isOwner && !isMechanic) return forbidden
 
-    const service = await Service.query().where('id', id).preload('budget' as any).first()
+    const service = await Service.query()
+      .where('id', id)
+      .preload('budget' as any)
+      .first()
     if (!service) return notFound
 
     const mechanicId = authUser?.id

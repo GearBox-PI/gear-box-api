@@ -17,7 +17,6 @@
  * Caso contrário, veja <https://www.gnu.org/licenses/>.
  */
 
-
 import { spawn } from 'node:child_process'
 import { rm, readdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
@@ -43,9 +42,7 @@ async function run(command, args, options = {}) {
         resolve(code)
         return
       }
-      reject(
-        new Error(`Command "${command} ${args.join(' ')}" exited with code ${code}`)
-      )
+      reject(new Error(`Command "${command} ${args.join(' ')}" exited with code ${code}`))
     })
   })
 }

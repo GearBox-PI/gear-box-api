@@ -99,20 +99,14 @@ export default defineConfig({
   | Commands
   |--------------------------------------------------------------------------
   */
-  commands: [
-    () => import('@adonisjs/core/commands'),
-    () => import('@adonisjs/lucid/commands'),
-  ],
+  commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands')],
 
   /*
   |--------------------------------------------------------------------------
   | Preloads
   |--------------------------------------------------------------------------
   */
-  preloads: [
-    () => import('./start/kernel.js'),
-    () => import('./start/routes.js'),
-  ],
+  preloads: [() => import('./start/kernel.js'), () => import('./start/routes.js')],
 
   /*
   |--------------------------------------------------------------------------
@@ -126,12 +120,12 @@ export default defineConfig({
   | Ponto de entrada do servidor
   |--------------------------------------------------------------------------
   */
-  ...( {
+  ...({
     entrypoints: {
       commands: './bin/console.ts',
       http: './bin/server.ts',
     },
-  } as any ),
+  } as any),
 
   /*
   |--------------------------------------------------------------------------
