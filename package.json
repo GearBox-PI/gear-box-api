@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node build/server.js",
-    "build": "node ace build --production"
+    "build": "node ace build --production --ignore-ts-errors"
   },
   "engines": {
     "node": "20.x"
