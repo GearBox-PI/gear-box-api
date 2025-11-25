@@ -13,4 +13,4 @@ echo "[simulate] Running migrations from compiled build..."
 node build/ace.js migration:run --force
 
 echo "[simulate] Seeding default users from compiled build..."
-node build/ace.js db:seed --files database/seeders/user_seeder --force
+node build/ace.js db:seed --files database/seeders/user_seeder
