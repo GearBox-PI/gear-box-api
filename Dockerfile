@@ -44,4 +44,4 @@ USER adonis
 EXPOSE 3333
 
 # Executa migrations de forma segura e inicia o server
-ENTRYPOINT ["sh", "-c", "node build/ace.js migration:run --force || true && node build/server.js"]
+ENTRYPOINT ["sh", "-c", "node build/ace.js migration:run --force && node build/ace.js migration:run --force && node build/server.js"]

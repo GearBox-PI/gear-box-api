@@ -20,9 +20,9 @@ const pgConnectionConfig: PostgreConfig = {
     user: Env.get('DB_USER'),
     password: Env.get('DB_PASSWORD'),
     database: databaseName,
-    ssl: Env.get('DB_SSL', false)
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   },
   pool: {
     min: 0,
