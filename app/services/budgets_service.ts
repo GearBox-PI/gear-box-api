@@ -104,18 +104,21 @@ export default class BudgetsService {
         builder
           .whereILike('description', term)
           .orWhereRaw('CAST(amount AS TEXT) ILIKE ?', [term])
-          .orWhereILike('status', term)
+          .orWhereRaw('CAST(status AS TEXT) ILIKE ?', [term])
         if (allowIdSearch) {
           builder.orWhere('id', search)
         }
-        builder
-          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
-          .orWhereHas('car', (carQuery) =>
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+        )
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('car', (carQuery) =>
             carQuery
               .whereILike('placa', term)
               .orWhereILike('marca', term)
               .orWhereILike('modelo', term)
           )
+        )
       })
     }
 

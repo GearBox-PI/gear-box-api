@@ -110,19 +110,24 @@ export default class ServicesService {
       const term = `%${search}%`
       const allowIdSearch = UUID_REGEX.test(search)
       query.where((builder) => {
-        builder.whereILike('description', term).orWhereILike('status', term)
+        builder.whereILike('description', term).orWhereRaw('CAST(status AS TEXT) ILIKE ?', [term])
         if (allowIdSearch) {
           builder.orWhere('id', search)
         }
-        builder
-          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
-          .orWhereHas('car', (carQuery) =>
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+        )
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('car', (carQuery) =>
             carQuery
               .whereILike('placa', term)
               .orWhereILike('marca', term)
               .orWhereILike('modelo', term)
           )
-          .orWhereHas('budget', (budgetQuery) => budgetQuery.whereILike('description', term))
+        )
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('budget', (budgetQuery) => budgetQuery.whereILike('description', term))
+        )
       })
     }
 

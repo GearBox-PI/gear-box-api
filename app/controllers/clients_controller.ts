@@ -45,12 +45,14 @@ export default class ClientsController {
           if (allowIdSearch) {
             builder.orWhere('id', search)
           }
-          .orWhereHas('cars', (carQuery) =>
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('cars', (carQuery) =>
             carQuery
               .whereILike('placa', term)
               .orWhereILike('marca', term)
               .orWhereILike('modelo', term)
           )
+        )
       })
     }
 

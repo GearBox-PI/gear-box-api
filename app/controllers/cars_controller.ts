@@ -43,7 +43,9 @@ export default class CarsController {
           if (allowIdSearch) {
             builder.orWhere('id', search)
           }
-          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+        builder.orWhere((relationScope) =>
+          relationScope.whereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+        )
       })
     }
 
