@@ -93,9 +93,7 @@ export default class BudgetsService {
       .orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
-      query.where((builder) => {
-        builder.where('user_id', authUser.id).orWhere('created_by', authUser.id)
-      })
+      query.where('created_by', authUser.id)
     }
 
     return query.paginate(page, perPage)
@@ -110,11 +108,7 @@ export default class BudgetsService {
       .first()
 
     if (!budget) return notFound
-    if (
-      authUser?.tipo === MECHANIC_ROLE &&
-      budget.userId !== authUser.id &&
-      budget.createdById !== authUser.id
-    )
+    if (authUser?.tipo === MECHANIC_ROLE && budget.createdById !== authUser.id)
       return forbidden
 
     return { status: 'ok', data: budget }
@@ -151,7 +145,7 @@ export default class BudgetsService {
 
     const budget = await Budget.find(id)
     if (!budget) return notFound
-    if (isMechanic && budget.userId !== authUser?.id && budget.createdById !== authUser?.id)
+    if (isMechanic && budget.createdById !== authUser?.id)
       return forbidden
 
     if (!isOwner) {
@@ -201,10 +195,9 @@ export default class BudgetsService {
     if (!budget) return notFound
 
     const isOwner = authUser?.tipo === ADMIN_ROLE
-    const isBudgetMechanic =
-      authUser?.tipo === MECHANIC_ROLE &&
-      (budget.userId === authUser?.id || budget.createdById === authUser?.id)
-    if (!isOwner && !isBudgetMechanic) return forbidden
+    const isBudgetCreator =
+      authUser?.tipo === MECHANIC_ROLE && budget.createdById === authUser?.id
+    if (!isOwner && !isBudgetCreator) return forbidden
 
     if (budget.status !== 'aberto') {
       return {
@@ -291,11 +284,10 @@ export default class BudgetsService {
     if (!budget) return notFound
 
     const isOwner = authUser?.tipo === ADMIN_ROLE
-    const isBudgetMechanic =
-      authUser?.tipo === MECHANIC_ROLE &&
-      (budget.userId === authUser?.id || budget.createdById === authUser?.id)
+    const isBudgetCreator =
+      authUser?.tipo === MECHANIC_ROLE && budget.createdById === authUser?.id
 
-    if (!isOwner && !isBudgetMechanic) return forbidden
+    if (!isOwner && !isBudgetCreator) return forbidden
 
     if (budget.status !== 'aberto') {
       return {

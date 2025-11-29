@@ -101,15 +101,7 @@ export default class ServicesService {
     query.orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
-      const mechanicId = authUser.id
-      query.where((builder) =>
-        builder
-          .where('assigned_to', mechanicId)
-          .orWhere('user_id', mechanicId)
-          .orWhereHas('budget' as any, (budgetQuery: any) =>
-            budgetQuery.where('user_id', mechanicId)
-          )
-      )
+      query.where('created_by', authUser.id)
     }
 
     const parsedStart = parseToDateTime(startDate)
@@ -132,13 +124,7 @@ export default class ServicesService {
 
     if (!service) return notFound
 
-    const mechanicId = authUser?.id
-    const assignedUserId = service.assignedToId ?? service.userId
-    if (
-      authUser?.tipo === MECHANIC_ROLE &&
-      mechanicId !== assignedUserId &&
-      mechanicId !== service.budget?.userId
-    )
+    if (authUser?.tipo === MECHANIC_ROLE && service.createdById !== authUser.id)
       return forbidden
 
     return { status: 'ok', data: service }
@@ -194,9 +180,7 @@ export default class ServicesService {
       .first()
     if (!service) return notFound
 
-    const mechanicId = authUser?.id
-    const assignedUserId = service.assignedToId ?? service.userId
-    if (isMechanic && mechanicId !== assignedUserId && mechanicId !== service.budget?.userId)
+    if (isMechanic && service.createdById !== authUser?.id)
       return forbidden
 
     const validationErrors: ValidationError[] = []
