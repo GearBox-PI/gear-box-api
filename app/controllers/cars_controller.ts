@@ -21,12 +21,15 @@ import Car from '#models/car'
 import Client from '#models/client'
 import { createCarValidator, updateCarValidator } from '#validators/cars_validator'
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default class CarsController {
   // Listar carros (dono e mecânico)
   async index({ request }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
     const search = String(request.input('search', '')).trim()
+    const allowIdSearch = UUID_REGEX.test(search)
 
     const carsQuery = Car.query().orderBy('created_at', 'desc')
 
@@ -37,7 +40,9 @@ export default class CarsController {
           .whereILike('placa', term)
           .orWhereILike('marca', term)
           .orWhereILike('modelo', term)
-          .orWhere('id', search)
+          if (allowIdSearch) {
+            builder.orWhere('id', search)
+          }
           .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
       })
     }

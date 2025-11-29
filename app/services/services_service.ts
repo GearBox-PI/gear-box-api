@@ -74,6 +74,7 @@ type UpdateServiceInput = {
 
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
 
@@ -107,11 +108,13 @@ export default class ServicesService {
 
     if (search) {
       const term = `%${search}%`
+      const allowIdSearch = UUID_REGEX.test(search)
       query.where((builder) => {
+        builder.whereILike('description', term).orWhereILike('status', term)
+        if (allowIdSearch) {
+          builder.orWhere('id', search)
+        }
         builder
-          .whereILike('description', term)
-          .orWhereILike('status', term)
-          .orWhere('id', search)
           .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
           .orWhereHas('car', (carQuery) =>
             carQuery

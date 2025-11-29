@@ -20,12 +20,15 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Client from '#models/client'
 import { createClientValidator, updateClientValidator } from '#validators/clients_validator'
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default class ClientsController {
   // Listar clientes (dono e mecânico)
   async index({ request }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
     const search = String(request.input('search', '')).trim()
+    const allowIdSearch = UUID_REGEX.test(search)
 
     const clientsQuery = Client.query()
       .preload('createdByUser')
@@ -39,7 +42,9 @@ export default class ClientsController {
           .whereILike('nome', term)
           .orWhereILike('email', term)
           .orWhereILike('telefone', term)
-          .orWhere('id', search)
+          if (allowIdSearch) {
+            builder.orWhere('id', search)
+          }
           .orWhereHas('cars', (carQuery) =>
             carQuery
               .whereILike('placa', term)

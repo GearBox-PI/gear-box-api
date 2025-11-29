@@ -80,6 +80,7 @@ type AcceptBudgetInput = {
 
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
@@ -98,12 +99,16 @@ export default class BudgetsService {
 
     if (search) {
       const term = `%${search}%`
+      const allowIdSearch = UUID_REGEX.test(search)
       query.where((builder) => {
         builder
           .whereILike('description', term)
-          .orWhereILike('amount', term)
+          .orWhereRaw('CAST(amount AS TEXT) ILIKE ?', [term])
           .orWhereILike('status', term)
-          .orWhere('id', search)
+        if (allowIdSearch) {
+          builder.orWhere('id', search)
+        }
+        builder
           .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
           .orWhereHas('car', (carQuery) =>
             carQuery
