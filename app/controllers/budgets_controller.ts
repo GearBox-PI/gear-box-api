@@ -52,8 +52,9 @@ export default class BudgetsController {
   async index({ request, auth }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
+    const search = String(request.input('search', '')).trim()
 
-    return this.budgetsService.list({ page, perPage, authUser: auth.user })
+    return this.budgetsService.list({ page, perPage, authUser: auth.user, search })
   }
 
   async show({ params, response, auth }: HttpContext) {

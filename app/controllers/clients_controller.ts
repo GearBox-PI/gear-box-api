@@ -25,13 +25,31 @@ export default class ClientsController {
   async index({ request }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
+    const search = String(request.input('search', '')).trim()
 
-    const clients = await Client.query()
+    const clientsQuery = Client.query()
       .preload('createdByUser')
       .preload('updatedByUser')
       .orderBy('created_at', 'desc')
-      .paginate(page, perPage)
-    return clients
+
+    if (search) {
+      const term = `%${search}%`
+      clientsQuery.where((builder) => {
+        builder
+          .whereILike('nome', term)
+          .orWhereILike('email', term)
+          .orWhereILike('telefone', term)
+          .orWhere('id', search)
+          .orWhereHas('cars', (carQuery) =>
+            carQuery
+              .whereILike('placa', term)
+              .orWhereILike('marca', term)
+              .orWhereILike('modelo', term)
+          )
+      })
+    }
+
+    return clientsQuery.paginate(page, perPage)
   }
 
   // Detalhar cliente (dono e mecânico)

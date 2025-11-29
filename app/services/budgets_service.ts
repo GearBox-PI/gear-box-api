@@ -43,7 +43,7 @@ type AcceptBudgetResult = {
   emailNotification?: EmailDispatchResult
 }
 
-type PaginateInput = { page: number; perPage: number; authUser: AuthUser }
+type PaginateInput = { page: number; perPage: number; authUser: AuthUser; search?: string }
 
 type BudgetOperationInput = { id: string; authUser: AuthUser }
 
@@ -85,7 +85,7 @@ const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
 
 export default class BudgetsService {
-  async list({ page, perPage, authUser }: PaginateInput) {
+  async list({ page, perPage, authUser, search }: PaginateInput) {
     const query = Budget.query()
       .preload('user')
       .preload('updatedBy')
@@ -94,6 +94,24 @@ export default class BudgetsService {
 
     if (authUser?.tipo === MECHANIC_ROLE) {
       query.where('created_by', authUser.id)
+    }
+
+    if (search) {
+      const term = `%${search}%`
+      query.where((builder) => {
+        builder
+          .whereILike('description', term)
+          .orWhereILike('amount', term)
+          .orWhereILike('status', term)
+          .orWhere('id', search)
+          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+          .orWhereHas('car', (carQuery) =>
+            carQuery
+              .whereILike('placa', term)
+              .orWhereILike('marca', term)
+              .orWhereILike('modelo', term)
+          )
+      })
     }
 
     return query.paginate(page, perPage)

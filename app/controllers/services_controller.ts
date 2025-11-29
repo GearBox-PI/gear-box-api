@@ -45,8 +45,16 @@ export default class ServicesController {
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
     const startDate = request.input('startDate')
     const endDate = request.input('endDate')
+    const search = String(request.input('search', '')).trim()
 
-    return this.servicesService.list({ page, perPage, authUser: auth.user, startDate, endDate })
+    return this.servicesService.list({
+      page,
+      perPage,
+      authUser: auth.user,
+      startDate,
+      endDate,
+      search,
+    })
   }
 
   // Detalhar serviço

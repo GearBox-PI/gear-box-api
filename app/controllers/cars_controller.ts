@@ -26,9 +26,23 @@ export default class CarsController {
   async index({ request }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
+    const search = String(request.input('search', '')).trim()
 
-    const cars = await Car.query().orderBy('created_at', 'desc').paginate(page, perPage)
-    return cars
+    const carsQuery = Car.query().orderBy('created_at', 'desc')
+
+    if (search) {
+      const term = `%${search}%`
+      carsQuery.where((builder) => {
+        builder
+          .whereILike('placa', term)
+          .orWhereILike('marca', term)
+          .orWhereILike('modelo', term)
+          .orWhere('id', search)
+          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+      })
+    }
+
+    return carsQuery.paginate(page, perPage)
   }
 
   // Detalhar carro

@@ -40,6 +40,7 @@ type PaginateInput = {
   authUser: AuthUser
   startDate?: DateInput
   endDate?: DateInput
+  search?: string
 }
 
 type ServiceOperationInput = { id: string; authUser: AuthUser }
@@ -95,13 +96,31 @@ function parseToDateTime(value: unknown) {
 }
 
 export default class ServicesService {
-  async list({ page, perPage, authUser, startDate, endDate }: PaginateInput) {
+  async list({ page, perPage, authUser, startDate, endDate, search }: PaginateInput) {
     const query = Service.query().preload('user').preload('updatedBy')
     query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     query.orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
       query.where('created_by', authUser.id)
+    }
+
+    if (search) {
+      const term = `%${search}%`
+      query.where((builder) => {
+        builder
+          .whereILike('description', term)
+          .orWhereILike('status', term)
+          .orWhere('id', search)
+          .orWhereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
+          .orWhereHas('car', (carQuery) =>
+            carQuery
+              .whereILike('placa', term)
+              .orWhereILike('marca', term)
+              .orWhereILike('modelo', term)
+          )
+          .orWhereHas('budget', (budgetQuery) => budgetQuery.whereILike('description', term))
+      })
     }
 
     const parsedStart = parseToDateTime(startDate)
