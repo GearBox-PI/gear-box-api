@@ -43,7 +43,13 @@ type AcceptBudgetResult = {
   emailNotification?: EmailDispatchResult
 }
 
-type PaginateInput = { page: number; perPage: number; authUser: AuthUser; search?: string }
+type PaginateInput = {
+  page: number
+  perPage: number
+  authUser: AuthUser
+  search?: string
+  status?: 'aberto' | 'aceito' | 'recusado'
+}
 
 type BudgetOperationInput = { id: string; authUser: AuthUser }
 
@@ -86,7 +92,7 @@ const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
 
 export default class BudgetsService {
-  async list({ page, perPage, authUser, search }: PaginateInput) {
+  async list({ page, perPage, authUser, search, status }: PaginateInput) {
     const query = Budget.query()
       .preload('user')
       .preload('updatedBy')
@@ -120,6 +126,10 @@ export default class BudgetsService {
           )
         )
       })
+    }
+
+    if (status) {
+      query.where('status', status)
     }
 
     return query.paginate(page, perPage)

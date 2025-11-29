@@ -53,8 +53,11 @@ export default class BudgetsController {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
     const search = String(request.input('search', '')).trim()
+    const rawStatus = String(request.input('status', '')).trim()
+    const allowedStatuses = ['aberto', 'aceito', 'recusado']
+    const status = allowedStatuses.includes(rawStatus) ? (rawStatus as typeof allowedStatuses[number]) : undefined
 
-    return this.budgetsService.list({ page, perPage, authUser: auth.user, search })
+    return this.budgetsService.list({ page, perPage, authUser: auth.user, search, status })
   }
 
   async show({ params, response, auth }: HttpContext) {
