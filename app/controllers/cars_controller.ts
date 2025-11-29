@@ -71,15 +71,25 @@ export default class CarsController {
         errors: [{ field: 'clientId', message: 'Cliente inexistente' }],
       })
 
-    const car = await Car.create({
-      clientId: payload.clientId,
-      placa: payload.placa,
-      marca: payload.marca,
-      modelo: payload.modelo,
-      ano: payload.ano,
-    })
+    try {
+      const car = await Car.create({
+        clientId: payload.clientId,
+        placa: payload.placa,
+        marca: payload.marca,
+        modelo: payload.modelo,
+        ano: payload.ano,
+      })
 
-    return response.created(car)
+      return response.created(car)
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        const code = (error as any).code
+        if (code === '23505') {
+          return response.conflict({ error: 'Placa já cadastrada na base.' })
+        }
+      }
+      throw error
+    }
   }
 
   // Atualizar carro (apenas dono)
