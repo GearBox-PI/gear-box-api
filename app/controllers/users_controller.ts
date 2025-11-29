@@ -172,7 +172,11 @@ export default class UsersController {
           .update({ userId: targetMechanic.id, updatedById: adminId })
         await Service.query()
           .where('user_id', user.id)
-          .update({ userId: targetMechanic.id, updatedById: adminId })
+          .update({ userId: targetMechanic.id, assignedToId: targetMechanic.id, updatedById: adminId })
+
+        await Service.query()
+          .where('assigned_to', user.id)
+          .update({ assignedToId: targetMechanic.id, updatedById: adminId })
       }
 
       user.ativo = false

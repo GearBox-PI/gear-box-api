@@ -98,12 +98,14 @@ function parseToDateTime(value: unknown) {
 
 export default class ServicesService {
   async list({ page, perPage, authUser, startDate, endDate, search }: PaginateInput) {
-    const query = Service.query().preload('user').preload('updatedBy')
+    const query = Service.query().preload('user').preload('assignedTo').preload('updatedBy')
     query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     query.orderBy('created_at', 'desc')
 
     if (authUser?.tipo === MECHANIC_ROLE) {
-      query.where('created_by', authUser.id)
+      query.where((builder) => {
+        builder.where('assigned_to', authUser.id).orWhere('user_id', authUser.id)
+      })
     }
 
     if (search) {
@@ -145,7 +147,11 @@ export default class ServicesService {
   }
 
   async get({ id, authUser }: ServiceOperationInput): Promise<ServiceResult<Service>> {
-    const serviceQuery = Service.query().where('id', id).preload('user').preload('updatedBy')
+    const serviceQuery = Service.query()
+      .where('id', id)
+      .preload('user')
+      .preload('assignedTo')
+      .preload('updatedBy')
     serviceQuery.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     const service = await serviceQuery.first()
 
