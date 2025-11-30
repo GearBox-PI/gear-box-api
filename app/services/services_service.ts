@@ -96,15 +96,22 @@ function parseToDateTime(value: unknown) {
   return null
 }
 
+function mechanicCanManage(service: Service, authUser: AuthUser): boolean {
+  if (!authUser?.id) return false
+  if (service.assignedToId) return service.assignedToId === authUser.id
+  if (service.userId) return service.userId === authUser.id
+  return false
+}
+
 export default class ServicesService {
   async list({ page, perPage, authUser, startDate, endDate, search }: PaginateInput) {
     const query = Service.query().preload('user').preload('assignedTo').preload('updatedBy')
     query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     query.orderBy('created_at', 'desc')
 
-    if (authUser?.tipo === MECHANIC_ROLE) {
+    if (authUser?.tipo === MECHANIC_ROLE && authUser.id) {
       query.where((builder) => {
-        builder.where('assigned_to', authUser.id).orWhere('user_id', authUser.id)
+        builder.where('assigned_to', authUser.id).orWhere('created_by', authUser.id)
       })
     }
 
@@ -128,19 +135,27 @@ export default class ServicesService {
           )
         )
         builder.orWhere((relationScope) =>
-          relationScope.whereHas('budget', (budgetQuery) => budgetQuery.whereILike('description', term))
+          relationScope.whereHas('budget', (budgetQuery) =>
+            budgetQuery.whereILike('description', term)
+          )
         )
       })
     }
 
     const parsedStart = parseToDateTime(startDate)
     if (parsedStart) {
-      query.where('created_at', '>=', parsedStart.startOf('day').toSQL())
+      const startSql = parsedStart.startOf('day').toSQL()
+      if (startSql) {
+        query.where('created_at', '>=', startSql)
+      }
     }
 
     const parsedEnd = parseToDateTime(endDate)
     if (parsedEnd) {
-      query.where('created_at', '<=', parsedEnd.endOf('day').toSQL())
+      const endSql = parsedEnd.endOf('day').toSQL()
+      if (endSql) {
+        query.where('created_at', '<=', endSql)
+      }
     }
 
     return query.paginate(page, perPage)
@@ -157,8 +172,11 @@ export default class ServicesService {
 
     if (!service) return notFound
 
-    if (authUser?.tipo === MECHANIC_ROLE && service.createdById !== authUser.id)
-      return forbidden
+    if (authUser?.tipo === MECHANIC_ROLE && !mechanicCanManage(service, authUser)) {
+      if (!authUser.id || service.createdById !== authUser.id) {
+        return forbidden
+      }
+    }
 
     return { status: 'ok', data: service }
   }
@@ -213,8 +231,7 @@ export default class ServicesService {
       .first()
     if (!service) return notFound
 
-    if (isMechanic && service.createdById !== authUser?.id)
-      return forbidden
+    if (isMechanic && !mechanicCanManage(service, authUser)) return forbidden
 
     const validationErrors: ValidationError[] = []
     const targetClientId = data.clientId ?? service.clientId

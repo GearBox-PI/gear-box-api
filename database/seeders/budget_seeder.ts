@@ -22,11 +22,11 @@ import Budget from '#models/budget'
 import Car from '#models/car'
 import User from '#models/user'
 
-const START_DATE = new Date(2022, 0, 1)
-const END_DATE = new Date()
-const CURRENT_MONTH_START = DateTime.local().startOf('month')
-const BUDGET_COUNT = 60
-const CURRENT_MONTH_BUDGETS = 25
+const START_MONTH = DateTime.local(2022, 12, 1).startOf('month')
+const END_MONTH = DateTime.local(2025, 11, 1).startOf('month')
+const MIN_ACCEPTED_PER_MONTH = 6
+const MAX_ACCEPTED_PER_MONTH = 15
+const EXTRA_NON_ACCEPTED_MAX = 4
 
 const budgetDescriptions = [
   'Troca de óleo e filtros',
@@ -43,8 +43,12 @@ const budgetDescriptions = [
   'Instalação de acessórios elétricos',
 ]
 
-function randomDate(start: Date, end: Date) {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+function randomDateInMonth(month: DateTime) {
+  const start = month.startOf('month')
+  const end = month.endOf('month')
+  const range = end.toMillis() - start.toMillis()
+  const offset = Math.floor(Math.random() * (range + 1))
+  return DateTime.fromMillis(start.toMillis() + offset)
 }
 
 function randomItem<T>(items: T[]): T {
@@ -55,12 +59,7 @@ function randomAmount(min = 350, max = 5000) {
   return Number((min + Math.random() * (max - min)).toFixed(2))
 }
 
-function randomStatus(): 'aberto' | 'aceito' | 'recusado' {
-  const roll = Math.random()
-  if (roll < 0.5) return 'aceito'
-  if (roll < 0.8) return 'aberto'
-  return 'recusado'
-}
+type BudgetSeederStatus = 'aberto' | 'aceito' | 'recusado'
 
 export default class BudgetSeeder extends BaseSeeder {
   public static environment = ['development', 'testing', 'production']
@@ -73,53 +72,49 @@ export default class BudgetSeeder extends BaseSeeder {
     const responsibles = users.filter((user) => ['dono', 'mecanico'].includes(user.tipo))
     const owner = users.find((user) => user.tipo === 'dono') ?? responsibles[0]
 
+    const months: DateTime[] = []
+    let cursor = END_MONTH
+    while (cursor.toMillis() >= START_MONTH.toMillis()) {
+      months.push(cursor)
+      cursor = cursor.minus({ months: 1 })
+    }
+
     const payload = []
-    for (let index = 0; index < BUDGET_COUNT; index++) {
-      const car = randomItem(cars)
-      const assignedUser = randomItem(responsibles)
-      const status = randomStatus()
-      const createdAtJS = randomDate(START_DATE, END_DATE)
-      const createdAt = DateTime.fromJSDate(createdAtJS)
-      const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 40) })
-      payload.push({
-        clientId: car.clientId,
-        carId: car.id,
-        userId: assignedUser.id,
-        createdById: Math.random() > 0.7 ? owner.id : assignedUser.id,
-        updatedById: assignedUser.id,
-        description: randomItem(budgetDescriptions),
-        amount: randomAmount().toFixed(2),
-        prazoEstimadoDias: Math.floor(Math.random() * 10) + 3,
-        status,
-        createdAt,
-        updatedAt,
-      })
+
+    for (const month of months) {
+      const acceptedCount =
+        Math.floor(Math.random() * (MAX_ACCEPTED_PER_MONTH - MIN_ACCEPTED_PER_MONTH + 1)) +
+        MIN_ACCEPTED_PER_MONTH
+      const extraBudgets = Math.floor(Math.random() * (EXTRA_NON_ACCEPTED_MAX + 1))
+      const target = acceptedCount + extraBudgets
+      const statuses: BudgetSeederStatus[] = []
+      for (let i = 0; i < acceptedCount; i++) statuses.push('aceito')
+      for (let i = 0; i < extraBudgets; i++) {
+        statuses.push(Math.random() > 0.5 ? 'aberto' : 'recusado')
+      }
+      statuses.sort(() => Math.random() - 0.5)
+
+      for (let index = 0; index < target; index++) {
+        const car = randomItem(cars)
+        const assignedUser = randomItem(responsibles)
+        const createdAt = randomDateInMonth(month)
+        const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 10) + 1 })
+        payload.push({
+          clientId: car.clientId,
+          carId: car.id,
+          userId: assignedUser.id,
+          createdById: Math.random() > 0.5 ? owner.id : assignedUser.id,
+          updatedById: assignedUser.id,
+          description: `${month.toFormat('LLL yyyy')} · ${randomItem(budgetDescriptions)}`,
+          amount: randomAmount(350, 5500).toFixed(2),
+          prazoEstimadoDias: Math.floor(Math.random() * 8) + 1,
+          status: statuses[index],
+          createdAt,
+          updatedAt,
+        })
+      }
     }
 
-    const currentMonthPayload = []
-    for (let index = 0; index < CURRENT_MONTH_BUDGETS; index++) {
-      const car = randomItem(cars)
-      const assignedUser = randomItem(responsibles)
-      const status: 'aberto' | 'aceito' | 'recusado' =
-        index < 18 ? 'aceito' : index < 23 ? 'aberto' : 'recusado'
-      const createdAtJS = randomDate(CURRENT_MONTH_START.toJSDate(), END_DATE)
-      const createdAt = DateTime.fromJSDate(createdAtJS)
-      const updatedAt = createdAt.plus({ days: Math.floor(Math.random() * 15) })
-      currentMonthPayload.push({
-        clientId: car.clientId,
-        carId: car.id,
-        userId: assignedUser.id,
-        createdById: Math.random() > 0.5 ? owner.id : assignedUser.id,
-        updatedById: assignedUser.id,
-        description: `(${createdAt.toFormat('LLL')}) ${randomItem(budgetDescriptions)}`,
-        amount: randomAmount(450, 6500).toFixed(2),
-        prazoEstimadoDias: Math.floor(Math.random() * 7) + 1,
-        status,
-        createdAt,
-        updatedAt,
-      })
-    }
-
-    await Budget.createMany([...payload, ...currentMonthPayload])
+    await Budget.createMany(payload)
   }
 }

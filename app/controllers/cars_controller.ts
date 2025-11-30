@@ -36,13 +36,10 @@ export default class CarsController {
     if (search) {
       const term = `%${search}%`
       carsQuery.where((builder) => {
-        builder
-          .whereILike('placa', term)
-          .orWhereILike('marca', term)
-          .orWhereILike('modelo', term)
-          if (allowIdSearch) {
-            builder.orWhere('id', search)
-          }
+        builder.whereILike('placa', term).orWhereILike('marca', term).orWhereILike('modelo', term)
+        if (allowIdSearch) {
+          builder.orWhere('id', search)
+        }
         builder.orWhere((relationScope) =>
           relationScope.whereHas('client', (clientQuery) => clientQuery.whereILike('nome', term))
         )

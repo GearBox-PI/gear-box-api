@@ -17,8 +17,6 @@
  */
 
 import User from '#models/user'
-import Budget from '#models/budget'
-import Service from '#models/service'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createUserValidator, updateUserValidator } from '#validators/users_validator'
 import db from '@adonisjs/lucid/services/db'
@@ -167,16 +165,21 @@ export default class UsersController {
           return response.badRequest({ error: 'Mecânico de destino inválido ou inativo.' })
         }
 
-        await Budget.query()
+        await db
+          .from('budgets')
           .where('user_id', user.id)
-          .update({ userId: targetMechanic.id, updatedById: adminId })
-        await Service.query()
-          .where('user_id', user.id)
-          .update({ userId: targetMechanic.id, assignedToId: targetMechanic.id, updatedById: adminId })
+          .update({ user_id: targetMechanic.id, updated_by: adminId })
 
-        await Service.query()
+        await db.from('services').where('user_id', user.id).update({
+          user_id: targetMechanic.id,
+          assigned_to: targetMechanic.id,
+          updated_by: adminId,
+        })
+
+        await db
+          .from('services')
           .where('assigned_to', user.id)
-          .update({ assignedToId: targetMechanic.id, updatedById: adminId })
+          .update({ assigned_to: targetMechanic.id, updated_by: adminId })
       }
 
       user.ativo = false

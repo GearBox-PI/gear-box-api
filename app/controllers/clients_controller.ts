@@ -38,13 +38,10 @@ export default class ClientsController {
     if (search) {
       const term = `%${search}%`
       clientsQuery.where((builder) => {
-        builder
-          .whereILike('nome', term)
-          .orWhereILike('email', term)
-          .orWhereILike('telefone', term)
-          if (allowIdSearch) {
-            builder.orWhere('id', search)
-          }
+        builder.whereILike('nome', term).orWhereILike('email', term).orWhereILike('telefone', term)
+        if (allowIdSearch) {
+          builder.orWhere('id', search)
+        }
         builder.orWhere((relationScope) =>
           relationScope.whereHas('cars', (carQuery) =>
             carQuery
