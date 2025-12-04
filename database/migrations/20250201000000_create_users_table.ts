@@ -27,7 +27,7 @@ export default class CreateUsersTable extends BaseSchema {
       table.string('nome').notNullable()
       table.string('email', 254).notNullable().unique()
       table.string('senha').notNullable()
-      table.enum('tipo', ['dono', 'mecanico']).notNullable()
+      table.enum('tipo', ['dono', 'mecanico', 'demo']).notNullable()
       table.boolean('ativo').notNullable().defaultTo(true)
       table.timestamp('created_at', { useTz: true }).defaultTo(this.now())
       table.timestamp('updated_at', { useTz: true }).defaultTo(this.now())

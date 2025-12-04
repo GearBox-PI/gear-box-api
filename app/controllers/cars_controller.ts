@@ -20,12 +20,13 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Car from '#models/car'
 import Client from '#models/client'
 import { createCarValidator, updateCarValidator } from '#validators/cars_validator'
+import demoSandboxService from '#services/demo_sandbox_service'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default class CarsController {
   // Listar carros (dono e mecânico)
-  async index({ request }: HttpContext) {
+  async index({ request, auth }: HttpContext) {
     const page = Number(request.input('page', 1))
     const perPage = Math.min(Number(request.input('perPage', 10)), 100)
     const search = String(request.input('search', '')).trim()
@@ -46,20 +47,44 @@ export default class CarsController {
       })
     }
 
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const dbCars = await carsQuery
+      const serialized = dbCars.map((car) => car.serialize())
+      const demoCars = demoSandboxService.listCars(auth.user.id, search)
+      const combined = [...demoCars, ...serialized].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt as any).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt as any).getTime() : 0
+        return dateB - dateA
+      })
+      return demoSandboxService.paginateArray(combined, page, perPage)
+    }
+
     return carsQuery.paginate(page, perPage)
   }
 
   // Detalhar carro
-  async show({ params, response }: HttpContext) {
+  async show({ params, response, auth }: HttpContext) {
     const { id } = params
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const car = demoSandboxService.findCar(auth.user.id, id)
+      if (car) return car
+    }
     const car = await Car.find(id)
     if (!car) return response.notFound({ error: 'Carro não encontrado' })
     return car
   }
 
   // Criar carro (dono e mecânico)
-  async store({ request, response }: HttpContext) {
+  async store({ request, response, auth }: HttpContext) {
     const payload = await createCarValidator.validate(request.all())
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const result = await demoSandboxService.createCar(auth.user, payload)
+      if (result.status === 'validation') {
+        return response.unprocessableEntity({ errors: result.errors })
+      }
+      return response.created(result.data)
+    }
 
     // Garante que o cliente existe
     const client = await Client.find(payload.clientId)
@@ -91,6 +116,14 @@ export default class CarsController {
 
   // Atualizar carro (apenas dono)
   async update({ auth, params, request, response }: HttpContext) {
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const data = await updateCarValidator.validate(request.all())
+      const updated = demoSandboxService.updateCar(auth.user, params.id, data)
+      if (!updated)
+        return response.notFound({ error: 'Carro não encontrado na sessão demonstrativa.' })
+      return updated
+    }
+
     if (auth.user?.tipo !== 'dono')
       return response.forbidden({ error: 'Apenas donos podem atualizar' })
 
@@ -106,6 +139,13 @@ export default class CarsController {
 
   // Remover carro (apenas dono)
   async destroy({ auth, params, response }: HttpContext) {
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const removed = demoSandboxService.deleteCar(auth.user.id, params.id)
+      if (!removed)
+        return response.notFound({ error: 'Carro não encontrado na sessão demonstrativa.' })
+      return response.noContent()
+    }
+
     if (auth.user?.tipo !== 'dono')
       return response.forbidden({ error: 'Apenas donos podem remover' })
 

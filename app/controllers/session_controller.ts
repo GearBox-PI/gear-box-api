@@ -20,6 +20,7 @@ import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createSessionValidator } from '#validators/session_validator'
 import { getAbilitiesForRole } from '#abilities/token_abilities'
+import demoSandboxService from '#services/demo_sandbox_service'
 import db from '@adonisjs/lucid/services/db'
 
 export default class SessionController {
@@ -32,6 +33,11 @@ export default class SessionController {
 
     if (!user.ativo) {
       return response.unauthorized({ error: 'Usuário desativado.' })
+    }
+
+    // Para contas demo, iniciamos um novo espaço de sessão em memória
+    if (user.tipo === 'demo') {
+      demoSandboxService.setupForUser(user)
     }
 
     // Cria token de acesso com abilities específicas do perfil
@@ -68,6 +74,10 @@ export default class SessionController {
     if (!user) return response.unauthorized({ error: 'Not authenticated' })
 
     await db.from('auth_access_tokens').where('tokenable_id', user.id).delete()
+
+    if (user.tipo === 'demo') {
+      demoSandboxService.clearForUser(user.id)
+    }
 
     return response.noContent()
   }

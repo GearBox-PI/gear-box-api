@@ -25,6 +25,7 @@ import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 import { DateTime } from 'luxon'
 import { validateClientAndCar } from '#services/relationship_guard'
+import demoSandboxService from '#services/demo_sandbox_service'
 
 type AuthUser = User | null | undefined
 
@@ -87,6 +88,7 @@ type AcceptBudgetInput = {
 const ADMIN_ROLE = 'dono'
 const MECHANIC_ROLE = 'mecanico'
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const OWNER_ROLES = new Set<string>(['dono', 'demo'])
 
 const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
@@ -98,6 +100,18 @@ export default class BudgetsService {
       .preload('updatedBy')
       .preload('createdBy')
       .orderBy('created_at', 'desc')
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const dbBudgets = await query
+      const serialized = dbBudgets.map((budget) => budget.serialize())
+      const demoBudgets = demoSandboxService.listBudgets(authUser.id, { search, status })
+      const combined = [...demoBudgets, ...serialized].sort((a, b) => {
+        const dateA = (a.createdAt ? new Date(a.createdAt as any).getTime() : 0) || 0
+        const dateB = (b.createdAt ? new Date(b.createdAt as any).getTime() : 0) || 0
+        return dateB - dateA
+      })
+      return demoSandboxService.paginateArray(combined, page, perPage)
+    }
 
     if (authUser?.tipo === MECHANIC_ROLE) {
       query.where('created_by', authUser.id)
@@ -136,6 +150,12 @@ export default class BudgetsService {
   }
 
   async get({ id, authUser }: BudgetOperationInput): Promise<ServiceResult<Budget>> {
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const budget = demoSandboxService.findBudget(authUser.id, id)
+      if (!budget) return notFound
+      return { status: 'ok', data: budget as any }
+    }
+
     const budget = await Budget.query()
       .where('id', id)
       .preload('user')
@@ -151,7 +171,18 @@ export default class BudgetsService {
 
   async create(input: CreateBudgetInput): Promise<ServiceResult<Budget>> {
     const { authUser, assignedToId, ...payload } = input
-    if (!authUser || ![MECHANIC_ROLE, ADMIN_ROLE].includes(authUser.tipo)) return forbidden
+    if (!authUser || ![MECHANIC_ROLE, ADMIN_ROLE, 'demo'].includes(authUser.tipo)) return forbidden
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const result = await demoSandboxService.createBudget(authUser, {
+        ...payload,
+        prazoEstimadoDias: payload.prazoEstimadoDias ?? null,
+        assignedToId: assignedToId ?? null,
+      })
+      if (result.status === 'validation') return result
+      if (result.status === 'forbidden') return forbidden
+      return { status: 'ok', data: result.data as any }
+    }
 
     const { errors: validationErrors } = await validateClientAndCar(payload.clientId, payload.carId)
     if (validationErrors.length) return { status: 'validation', errors: validationErrors }
@@ -173,8 +204,16 @@ export default class BudgetsService {
 
   async update(input: UpdateBudgetInput): Promise<ServiceResult<Budget>> {
     const { id, data, authUser } = input
-    const isOwner = authUser?.tipo === ADMIN_ROLE
+    const isOwner = authUser?.tipo ? OWNER_ROLES.has(authUser.tipo) : false
     const isMechanic = authUser?.tipo === MECHANIC_ROLE
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      if (!authUser) return forbidden
+      const result = await demoSandboxService.updateBudget(authUser, id, data)
+      if (!result) return notFound
+      if (result.status === 'validation') return result
+      return { status: 'ok', data: result.data as any }
+    }
 
     if (!isOwner && !isMechanic) return forbidden
 
@@ -203,7 +242,13 @@ export default class BudgetsService {
   }
 
   async delete({ id, authUser }: BudgetOperationInput): Promise<ServiceResult<void>> {
-    if (authUser?.tipo !== ADMIN_ROLE) return forbidden
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const removed = demoSandboxService.deleteBudget(authUser.id, id)
+      if (!removed) return notFound
+      return { status: 'ok', data: undefined }
+    }
+
+    if (!authUser?.tipo || !OWNER_ROLES.has(authUser.tipo)) return forbidden
 
     const budget = await Budget.find(id)
     if (!budget) return notFound
@@ -225,10 +270,25 @@ export default class BudgetsService {
         ],
       }
     }
+    if (demoSandboxService.isDemoUser(authUser)) {
+      if (!authUser) return forbidden
+      const result = await demoSandboxService.acceptBudget(authUser, id, { assignedToId })
+      if (result.status === 'not_found') return notFound
+      if (result.status === 'validation') return result
+      const emailNotification = {
+        status: 'skipped' as const,
+        message: 'Modo demonstração: e-mails não são enviados.',
+      }
+      return {
+        status: 'ok',
+        data: { budget: result.data.budget as any, service: result.data.service as any, emailNotification },
+      }
+    }
+
     const budget = await Budget.find(id)
     if (!budget) return notFound
 
-    const isOwner = authUser?.tipo === ADMIN_ROLE
+    const isOwner = authUser?.tipo ? OWNER_ROLES.has(authUser.tipo) : false
     const isBudgetCreator = authUser?.tipo === MECHANIC_ROLE && budget.createdById === authUser?.id
     if (!isOwner && !isBudgetCreator) return forbidden
 
@@ -242,7 +302,7 @@ export default class BudgetsService {
     const assignedUser = await User.query()
       .where('id', assignedToId)
       .where('ativo', true)
-      .whereIn('tipo', [MECHANIC_ROLE, ADMIN_ROLE])
+      .whereIn('tipo', [MECHANIC_ROLE, ADMIN_ROLE, 'demo'])
       .first()
 
     if (!assignedUser) {
@@ -313,10 +373,18 @@ export default class BudgetsService {
   }
 
   async reject({ id, authUser }: BudgetOperationInput): Promise<ServiceResult<Budget>> {
+    if (demoSandboxService.isDemoUser(authUser)) {
+      if (!authUser) return forbidden
+      const result = demoSandboxService.rejectBudget(authUser, id)
+      if (result.status === 'not_found') return notFound
+      if (result.status === 'validation') return result
+      return { status: 'ok', data: result.data as any }
+    }
+
     const budget = await Budget.find(id)
     if (!budget) return notFound
 
-    const isOwner = authUser?.tipo === ADMIN_ROLE
+    const isOwner = authUser?.tipo ? OWNER_ROLES.has(authUser.tipo) : false
     const isBudgetCreator = authUser?.tipo === MECHANIC_ROLE && budget.createdById === authUser?.id
 
     if (!isOwner && !isBudgetCreator) return forbidden

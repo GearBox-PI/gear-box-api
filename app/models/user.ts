@@ -60,7 +60,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare senha: string
 
   @column({ columnName: 'tipo' })
-  declare tipo: 'dono' | 'mecanico'
+  declare tipo: 'dono' | 'mecanico' | 'demo'
 
   @column()
   declare ativo: boolean

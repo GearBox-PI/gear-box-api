@@ -20,16 +20,22 @@ import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createUserValidator, updateUserValidator } from '#validators/users_validator'
 import db from '@adonisjs/lucid/services/db'
+import demoSandboxService from '#services/demo_sandbox_service'
 
 export default class UsersController {
   // Lista usuários (apenas dono)
   async index({ auth, request, response }: HttpContext) {
+    const page = Number(request.input('page', 1))
+    const perPage = Math.min(Number(request.input('perPage', 10)), 100)
+    const search = String(request.input('search', '')).trim()
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      return demoSandboxService.listUsers(auth.user.id, page, perPage, search)
+    }
+
     if (auth.user?.tipo !== 'dono') {
       return response.forbidden({ error: 'Apenas donos podem listar usuários.' })
     }
-
-    const page = Number(request.input('page', 1))
-    const perPage = Math.min(Number(request.input('perPage', 10)), 100)
 
     const users = await User.query().paginate(page, perPage)
     return users
@@ -38,6 +44,20 @@ export default class UsersController {
   // Detalha usuário: dono pode ver qualquer; mecânico apenas o próprio
   async show({ auth, params, response }: HttpContext) {
     const { id } = params
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const record = demoSandboxService.findUser(auth.user.id, id)
+      if (!record) return response.notFound({ error: 'Usuário não encontrado' })
+      return {
+        id: record.id,
+        nome: record.nome,
+        email: record.email,
+        tipo: record.tipo,
+        ativo: record.ativo,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      }
+    }
 
     if (auth.user?.tipo !== 'dono' && auth.user?.id !== id) {
       return response.forbidden({ error: 'Sem permissão para visualizar este usuário.' })
@@ -57,11 +77,33 @@ export default class UsersController {
 
   // Cria usuário (apenas dono)
   async store({ auth, request, response }: HttpContext) {
+    const payload = await createUserValidator.validate(request.all())
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const existing = demoSandboxService.findUserByEmail(auth.user.id, payload.email)
+      if (existing) {
+        return response.unprocessableEntity({ errors: [{ message: 'E-mail já está em uso.' }] })
+      }
+      const record = demoSandboxService.createUser(auth.user, {
+        nome: payload.nome,
+        email: payload.email,
+        tipo: payload.tipo,
+        ativo: payload.ativo ?? true,
+      })
+      return response.created({
+        id: record.id,
+        nome: record.nome,
+        email: record.email,
+        tipo: record.tipo,
+        ativo: record.ativo,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      })
+    }
+
     if (auth.user?.tipo !== 'dono') {
       return response.forbidden({ error: 'Apenas donos podem criar usuários.' })
     }
-
-    const payload = await createUserValidator.validate(request.all())
 
     // Checagem simples de e-mail único
     const emailTaken = await User.findBy('email', payload.email)
@@ -88,6 +130,36 @@ export default class UsersController {
   // Atualiza usuário: dono qualquer; mecânico apenas o próprio (restrito a nome/senha)
   async update({ auth, params, request, response }: HttpContext) {
     const { id } = params
+    const data = await updateUserValidator.validate(request.all())
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      const record = demoSandboxService.findUser(auth.user.id, id)
+      if (!record) {
+        return response.notFound({ error: 'Usuário não encontrado' })
+      }
+      if (data.email && data.email !== record.email) {
+        const existing = demoSandboxService.findUserByEmail(auth.user.id, data.email)
+        if (existing && existing.id !== record.id) {
+          return response.unprocessableEntity({ errors: [{ message: 'E-mail já está em uso.' }] })
+        }
+      }
+      const updated = demoSandboxService.updateUser(auth.user, id, {
+        nome: data.nome,
+        email: data.email,
+        tipo: data.tipo,
+        ativo: data.ativo,
+      })
+      if (!updated) return response.notFound({ error: 'Usuário não encontrado' })
+      return {
+        id: updated.id,
+        nome: updated.nome,
+        email: updated.email,
+        tipo: updated.tipo,
+        ativo: updated.ativo,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt,
+      }
+    }
 
     const isOwner = auth.user?.tipo === 'dono'
     const isSelf = auth.user?.id === id
@@ -95,8 +167,6 @@ export default class UsersController {
     if (!isOwner && !isSelf) {
       return response.forbidden({ error: 'Sem permissão para atualizar este usuário.' })
     }
-
-    const data = await updateUserValidator.validate(request.all())
 
     const user = await User.findOrFail(id)
 
@@ -138,6 +208,16 @@ export default class UsersController {
   // Remove usuário (apenas dono). Mecânicos são desativados com opção de transferência.
   async destroy({ auth, params, request, response }: HttpContext) {
     const { id } = params
+
+    if (demoSandboxService.isDemoUser(auth.user)) {
+      if (auth.user.id === id) {
+        demoSandboxService.deleteUser(auth.user, id)
+        return response.ok({ message: 'Conta demonstrativa removida da lista.' })
+      }
+      const removed = demoSandboxService.deleteUser(auth.user, id)
+      if (!removed) return response.notFound({ error: 'Usuário não encontrado' })
+      return response.noContent()
+    }
 
     if (auth.user?.tipo !== 'dono') {
       return response.forbidden({ error: 'Apenas donos podem remover usuários.' })

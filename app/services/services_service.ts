@@ -20,6 +20,7 @@ import Service from '#models/service'
 import User from '#models/user'
 import { DateTime } from 'luxon'
 import { validateBudgetLinks, validateClientAndCar } from '#services/relationship_guard'
+import demoSandboxService from '#services/demo_sandbox_service'
 
 type AuthUser = User | null | undefined
 
@@ -77,6 +78,7 @@ const MECHANIC_ROLE = 'mecanico'
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const notFound: ServiceError = { status: 'not_found' }
 const forbidden: ServiceError = { status: 'forbidden' }
+const OWNER_ROLES = new Set<string>(['dono', 'demo'])
 
 function parseToDateTime(value: unknown) {
   if (!value) return null
@@ -108,6 +110,25 @@ export default class ServicesService {
     const query = Service.query().preload('user').preload('assignedTo').preload('updatedBy')
     query.preload('budget' as any, (budgetQuery: any) => budgetQuery.preload('user'))
     query.orderBy('created_at', 'desc')
+
+    const startIso = this.dateInputToIso(startDate)
+    const endIso = this.dateInputToIso(endDate)
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const dbServices = await query
+      const serialized = dbServices.map((service) => service.serialize())
+      const demoServices = demoSandboxService.listServices(authUser.id, {
+        search,
+        startDate: startIso,
+        endDate: endIso,
+      })
+      const combined = [...demoServices, ...serialized].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt as any).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt as any).getTime() : 0
+        return dateB - dateA
+      })
+      return demoSandboxService.paginateArray(combined, page, perPage)
+    }
 
     if (authUser?.tipo === MECHANIC_ROLE && authUser.id) {
       query.where((builder) => {
@@ -162,6 +183,12 @@ export default class ServicesService {
   }
 
   async get({ id, authUser }: ServiceOperationInput): Promise<ServiceResult<Service>> {
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const service = demoSandboxService.findService(authUser.id, id)
+      if (!service) return notFound
+      return { status: 'ok', data: service as any }
+    }
+
     const serviceQuery = Service.query()
       .where('id', id)
       .preload('user')
@@ -183,6 +210,20 @@ export default class ServicesService {
 
   async create(input: CreateServiceInput): Promise<ServiceResult<Service>> {
     const { authUser, ...payload } = input
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      if (!authUser) return forbidden
+      const result = await demoSandboxService.createStandaloneService(authUser, {
+        ...payload,
+        totalValue: payload.totalValue ?? 0,
+        prazoEstimadoDias: payload.prazoEstimadoDias ?? null,
+        dataPrevista: payload.dataPrevista ?? null,
+        budgetId: payload.budgetId ?? null,
+      })
+      if (result.status === 'validation') return result
+      if (result.status === 'not_found') return notFound
+      return { status: 'ok', data: result.data as any }
+    }
 
     const validationErrors: ValidationError[] = []
     const { errors: clientCarErrors } = await validateClientAndCar(payload.clientId, payload.carId)
@@ -220,8 +261,16 @@ export default class ServicesService {
   async update(input: UpdateServiceInput): Promise<ServiceResult<Service>> {
     const { id, data, authUser } = input
     const userRole = authUser?.tipo
-    const isOwner = userRole === ADMIN_ROLE
+    const isOwner = userRole ? OWNER_ROLES.has(userRole) : false
     const isMechanic = userRole === MECHANIC_ROLE
+
+    if (demoSandboxService.isDemoUser(authUser)) {
+      if (!authUser) return forbidden
+      const result = await demoSandboxService.updateService(authUser, id, data)
+      if (!result) return notFound
+      if (result.status === 'validation') return result
+      return { status: 'ok', data: result.data as any }
+    }
 
     if (!isOwner && !isMechanic) return forbidden
 
@@ -267,12 +316,33 @@ export default class ServicesService {
   }
 
   async delete({ id, authUser }: ServiceOperationInput): Promise<ServiceResult<void>> {
-    if (authUser?.tipo !== ADMIN_ROLE) return forbidden
+    if (demoSandboxService.isDemoUser(authUser)) {
+      const removed = demoSandboxService.deleteService(authUser.id, id)
+      if (!removed) return notFound
+      return { status: 'ok', data: undefined }
+    }
+
+    if (!authUser?.tipo || !OWNER_ROLES.has(authUser.tipo)) return forbidden
 
     const service = await Service.find(id)
     if (!service) return notFound
 
     await service.delete()
     return { status: 'ok', data: undefined }
+  }
+
+  private dateInputToIso(value: DateInput): string | null {
+    if (!value) return null
+    if (value instanceof DateTime) {
+      return value.isValid ? value.toISO() : null
+    }
+    if (value instanceof Date) {
+      return value.toISOString()
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      return trimmed ? trimmed : null
+    }
+    return null
   }
 }

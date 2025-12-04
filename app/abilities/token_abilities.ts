@@ -30,6 +30,14 @@ export const ROLE_ABILITIES: Record<string, string[]> = {
     'services:write',
   ],
   mecanico: ['clients:read', 'cars:read', 'services:read', 'services:write'], // mecanico pode atualizar serviços mas não gerenciar clients
+  demo: [
+    'clients:read',
+    'clients:write',
+    'cars:read',
+    'cars:write',
+    'services:read',
+    'services:write',
+  ],
 }
 
 export function getAbilitiesForRole(role: string): string[] {
